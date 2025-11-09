@@ -35,15 +35,20 @@ public class ArgumentParser {
                 switch (args[i].substring(2)) {
                     case "input":
                         inputPath = args[i + 1];
+                        break;
                     case "root-class":
                         rootClass = args[i + 1];
+                        break;
                     case "package":
                         packageName = args[i + 1];
+                        break;
                     case "out":
                         outDir = args[i + 1];
-                    case "inner-classes":
-                        innerClasses = Boolean.parseBoolean(args[i + 1]);
+                        break;
                 }
+
+                if (args[i].contains("inner-classes="))
+                    innerClasses = Boolean.parseBoolean(args[i].substring(16));
             }
         }
 
