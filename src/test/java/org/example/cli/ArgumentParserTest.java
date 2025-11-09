@@ -14,7 +14,7 @@ class ArgumentParserTest {
                 "--root-class", "WeatherApiResponse",
                 "--package", "com.team606.mrdinner.entity",
                 "--out", "build/generated",
-                "--inner-classes=true"
+                "--inner-classes", "true"
         };
 
         ArgumentParser parser = new ArgumentParser();

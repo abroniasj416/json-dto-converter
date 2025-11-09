@@ -8,7 +8,7 @@ public class ArgumentParser {
 //            --root-class <RootClassName> ^
 //            --package <com.example.dto> ^
 //            --out <build/generated> ^
-//            --inner-classes=true
+//            --inner-classes true
 
 //    args[0] -> --input
 //    args[1] -> <path/to/sample.json>
@@ -18,7 +18,8 @@ public class ArgumentParser {
 //    args[5] -> <com.example.dto>
 //    args[6] -> --out
 //    args[7] -> <build/generated>
-//    args[8] -> --inner-classes=true
+//    args[8] -> --inner-classes
+//    args[9] -> true
 
     public ParsedArguments parse(String[] args) {
         String inputPath = null;
@@ -45,10 +46,9 @@ public class ArgumentParser {
                     case "out":
                         outDir = args[i + 1];
                         break;
+                    case "inner-classes":
+                        innerClasses = Boolean.parseBoolean(args[i + 1]);
                 }
-
-                if (args[i].contains("inner-classes="))
-                    innerClasses = Boolean.parseBoolean(args[i].substring(16));
             }
         }
 
