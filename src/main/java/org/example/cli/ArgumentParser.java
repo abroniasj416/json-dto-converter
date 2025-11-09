@@ -21,11 +21,11 @@ public class ArgumentParser {
 //    args[8] -> --inner-classes=true
 
     public ParsedArguments parse(String[] args) {
-        String inputPath;
-        String rootClass;
-        String packageName;
-        String outDir;
-        boolean innerClasses;
+        String inputPath = null;
+        String rootClass = null;
+        String packageName = null;
+        String outDir = null;
+        boolean innerClasses = false;
 
         // TODO : inputPath, rootClass, packageName, outDir, innerClasses가 잘못된 값일 경우 예외처리 -> 예외처리하지 않으면 return 문이 불완전
         // TODO : 상수 분리
@@ -52,7 +52,7 @@ public class ArgumentParser {
             }
         }
 
-        retrun new ParsedArguments(inputPath, rootClass, packageName, outDir, innerClasses);
+        return new ParsedArguments(inputPath, rootClass, packageName, outDir, innerClasses);
     }
 
 
