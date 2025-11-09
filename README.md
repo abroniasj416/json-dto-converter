@@ -38,7 +38,7 @@ java -jar json-dto-converter.jar ^
   --root-class <RootClassName> ^
   --package <com.example.dto> ^
   --out <build/generated> ^
-  --inner-classes=true
+  --inner-classes <true/false>
 ```
 
 ### CLI 인자 목록
@@ -67,7 +67,7 @@ java -jar json-dto-converter.jar ^
 
 #### 출력
 - **출력 위치**: `--out` 경로 기준
-- **예시 (inner-classes=true 시 단일 파일)**
+- **예시 (--inner-classes true 시 단일 파일)**
 
 **WeatherApiResponse.java**
 ```java
@@ -98,4 +98,4 @@ java -jar json-dto-converter.jar ^
   --root-class WeatherApiResponse ^
   --package com.team606.mrdinner.entity ^
   --out "C:\Users\hsj9433\Desktop\mrdinner\backend\src\main\java\com\team606\mrdinner\entity" ^
-  --inner-classes=true
+  --inner-classes true
