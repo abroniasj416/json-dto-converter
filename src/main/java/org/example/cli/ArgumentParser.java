@@ -88,7 +88,7 @@ public class ArgumentParser {
             if (!seen.add(option))
                 throw new IllegalArgumentException(("[ERROR] 옵션이 중복되었습니다: " + option));
             // 옵션 값 누락 예외
-            if (value == null || value.isBlank() || value.startsWith("--"))
+            if (value.isBlank() || value.startsWith("--"))
                 throw new IllegalArgumentException("[ERROR] 옵션의 값이 없습니다: " + option);
         }
 
@@ -117,9 +117,8 @@ public class ArgumentParser {
 
             // --root-class: 자바 식별자/키워드 금지 예외
             if (option.equals("--root-class")) {
-                if (!SourceVersion.isIdentifier(value) || SourceVersion.isKeyword(value)) {
+                if (!SourceVersion.isIdentifier(value) || SourceVersion.isKeyword(value))
                     throw new IllegalArgumentException("[ERROR] --root-class 값이 유효한 자바 클래스명이 아닙니다: " + value);
-                }
             }
             // TODO : --package: 점 분리된 각 파트 검사(SourceVersion.isIdentifier & isKeyword 금지)
             if (option.equals("--package")) {
