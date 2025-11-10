@@ -66,43 +66,32 @@ public class ArgumentParser {
     }
 
     private void validateOptions(String[] args) {
-        List<String> options = new ArrayList<>();
-        for (int i = 0; i < args.length; i++) {
-            if (i % 2 == 0)
-                options.add(args[i]);
-        }
-        Set<String> removedDuplication = new HashSet<>(options);
+        // 옵션-값의 쌍 최소 요건 검사
+        if (args.length % 2 != 0)
+            throw new IllegalArgumentException("[ERROR] 옵션과 값은 쌍으로 입력해야 합니다.");
 
-        // 옵션 중복
-        if (options.size() != removedDuplication.size())
-            throw new IllegalArgumentException("[ERROR] 옵션 중복");
+        Set<String> allowed = Set.of("--input", "--root-class", "--package", "--out", "--inner-classes");
+        Set<String> seen = new HashSet<>();
 
-        for (String option : options) {
-            // 옵션 형식 위반(‘--’ 없이 토큰 시작)
+        for (int i = 0; i < args.length; i += 2) {
+            String option = args[i];
+            String value = args[i + 1];
+
             if (!option.startsWith("--"))
                 throw new IllegalArgumentException("[ERROR] 옵션은 '--'으로 시작해야 합니다: " + option);
-            // 지원하지 않는 옵션
-            if (!option.equals("--input")
-                    && !option.equals("--root-class")
-                    && !option.equals("--package")
-                    && !option.equals("--out")
-                    && !option.equals("--inner-classes"))
-                throw new IllegalArgumentException("[ERROR] 지원하지 않는 옵션: " + option);
-
+            if (!allowed.contains(option))
+                throw new IllegalArgumentException("[EROR] 지원하지 않는 옵션입니다: " + option);
+            if (!seen.add(option))
+                throw new IllegalArgumentException(("[ERROR] 옵션이 중복되었습니다: " + option));
+            if (value == null || value.isBlank() || value.startsWith("--"))
+                throw new IllegalArgumentException("[ERROR] 옵션의 값이 없습니다: " + option);
         }
 
-        // 필수 옵션 누락 (--input, --root-class, --package, --out)
-        if (!options.contains("--input"))
-            throw new IllegalArgumentException("[ERROR] --input 은 필수입니다.");
-        if (!options.contains("--root-class"))
-            throw new IllegalArgumentException("[ERROR] --root-class 는 필수입니다.");
-        if (!options.contains("--package"))
-            throw new IllegalArgumentException("[ERROR] --package 는 필수입니다.");
-        if (!options.contains("--out"))
-            throw new IllegalArgumentException("[ERROR] --out 은 필수입니다.");
+        // TODO : 필수 옵션 포함 예외 구현
     }
 
     private void validateValues(String[] args) {
         // TODO : 구현
+
     }
 }
