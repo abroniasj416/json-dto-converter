@@ -1,5 +1,8 @@
 package org.example.cli;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.example.json.JsonValidator;
+
 import javax.lang.model.SourceVersion;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -135,18 +138,20 @@ public class ArgumentParser {
                         throw new IllegalArgumentException("[ERROR] --package 값에 빈 세그먼트가 포함되어 있습니다: " + value);
                     // 자바 식별자 규칙 위반 (예: com.1abc)
                     if (!SourceVersion.isIdentifier(packageToken)) {
-                        throw new IllegalArgumentException("[ERROR] --package 값의 일부가 유효한 식별자가 아닙니다: " + part);
+                        throw new IllegalArgumentException("[ERROR] --package 값의 일부가 유효한 식별자가 아닙니다: " + packageToken);
                     }
                     // 자바 키워드 사용 금지 (예: com.class.api)
                     if (SourceVersion.isKeyword(packageToken)) {
-                        throw new IllegalArgumentException("[ERROR] --package 값에 Java 키워드가 포함되어 있습니다: " + part);
+                        throw new IllegalArgumentException("[ERROR] --package 값에 Java 키워드가 포함되어 있습니다: " + packageToken);
                     }
                 }
             }
-            // TODO : --input: 존재/읽기/JSON 파싱 가능 (FileValidator.validateInputFile)
+            // --input: 존재/읽기/JSON 파싱 가능
             if (option.equals("--input")) {
                 Path path = FileValidator.validateReadableFile(value);
                 String json = FileValidator.readUtf8(path);
+                JsonNode root = JsonValidator.assertValidAndParse(json, path.toString());
+                // TODO : parse(...)에서 root를 저장할지, 나중 단계(JsonAnalyzer)로 넘길지는 설계에 맞춰 결정할 예정
             }
             // TODO : --out: 디렉터리/생성/쓰기 가능 (FileValidator.validateOutDir)
             if (option.equals("--out")) {
