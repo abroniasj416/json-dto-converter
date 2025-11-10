@@ -1,5 +1,6 @@
 package org.example.cli;
 
+import javax.lang.model.SourceVersion;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -106,7 +107,36 @@ public class ArgumentParser {
     }
 
     private void validateValues(String[] args) {
-        // TODO : 구현
+        // 옵션-값의 쌍 최소 요건 검사
+        if (args.length % 2 != 0)
+            throw new IllegalArgumentException("[ERROR] 옵션과 값은 쌍으로 입력해야 합니다.");
 
+        for (int i = 0; i < args.length; i += 2) {
+            String option = args[i];
+            String value = args[i + 1];
+
+            // --root-class: 자바 식별자/키워드 금지 예외
+            if (option.equals("--root-class")) {
+                if (!SourceVersion.isIdentifier(value) || SourceVersion.isKeyword(value)) {
+                    throw new IllegalArgumentException("[ERROR] --root-class 값이 유효한 자바 클래스명이 아닙니다: " + value);
+                }
+            }
+            // TODO : --package: 점 분리된 각 파트 검사(SourceVersion.isIdentifier & isKeyword 금지)
+            if (option.equals("--package")) {
+
+            }
+            // TODO : --input: 존재/읽기/JSON 파싱 가능 (FileValidator.validateInputFile)
+            if (option.equals("--input")) {
+
+            }
+            // TODO : --out: 디렉터리/생성/쓰기 가능 (FileValidator.validateOutDir)
+            if (option.equals("--out")) {
+
+            }
+            // TODO : --inner-classes: 불리언(true, false) 형식 확인
+            if (option.equals("--inner-classes")) {
+
+            }
+        }
     }
 }
