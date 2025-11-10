@@ -1,6 +1,7 @@
 package org.example.cli;
 
 import javax.lang.model.SourceVersion;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -144,7 +145,8 @@ public class ArgumentParser {
             }
             // TODO : --input: 존재/읽기/JSON 파싱 가능 (FileValidator.validateInputFile)
             if (option.equals("--input")) {
-
+                Path path = FileValidator.validateReadableFile(value);
+                String json = FileValidator.readUtf8(path);
             }
             // TODO : --out: 디렉터리/생성/쓰기 가능 (FileValidator.validateOutDir)
             if (option.equals("--out")) {
