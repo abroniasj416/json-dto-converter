@@ -120,9 +120,27 @@ public class ArgumentParser {
                 if (!SourceVersion.isIdentifier(value) || SourceVersion.isKeyword(value))
                     throw new IllegalArgumentException("[ERROR] --root-class 값이 유효한 자바 클래스명이 아닙니다: " + value);
             }
-            // TODO : --package: 점 분리된 각 파트 검사(SourceVersion.isIdentifier & isKeyword 금지)
+            // --package: 점으로 분리된 각 package 파트 예외
             if (option.equals("--package")) {
+                String[] packageTokens = value.split("\\.");
 
+                // 아무 입력도 하지 않음
+                if (packageTokens.length == 0)
+                    throw new IllegalArgumentException("[ERROR] --package 값이 비어 있습니다: " + value);
+
+                for (String packageToken : packageTokens) {
+                    // 빈 세그먼트 (예: com..example)
+                    if (packageToken.isBlank())
+                        throw new IllegalArgumentException("[ERROR] --package 값에 빈 세그먼트가 포함되어 있습니다: " + value);
+                    // 자바 식별자 규칙 위반 (예: com.1abc)
+                    if (!SourceVersion.isIdentifier(packageToken)) {
+                        throw new IllegalArgumentException("[ERROR] --package 값의 일부가 유효한 식별자가 아닙니다: " + part);
+                    }
+                    // 자바 키워드 사용 금지 (예: com.class.api)
+                    if (SourceVersion.isKeyword(packageToken)) {
+                        throw new IllegalArgumentException("[ERROR] --package 값에 Java 키워드가 포함되어 있습니다: " + part);
+                    }
+                }
             }
             // TODO : --input: 존재/읽기/JSON 파싱 가능 (FileValidator.validateInputFile)
             if (option.equals("--input")) {
