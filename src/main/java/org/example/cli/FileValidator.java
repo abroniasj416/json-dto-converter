@@ -1,5 +1,7 @@
 package org.example.cli;
 
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,5 +21,16 @@ public final class FileValidator {
             throw new IllegalArgumentException("[ERROR] --input 파일을 읽을 수 없습니다: " + path);
 
         return path;
+    }
+
+    // UTF-8로 읽어 온 문자열 반환
+    public static String readUtf8(Path path) {
+        try {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (MalformedInputException e) {
+            throw new IllegalArgumentException("[ERROR] --input 파일이 UTF-8 인코딩이 아닙니다: " + path);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("[ERROR] --input 파일을 읽는 중 오류가 발생했습니다: " + path);
+        }
     }
 }
