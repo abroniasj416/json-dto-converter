@@ -77,17 +77,32 @@ public class ArgumentParser {
             String option = args[i];
             String value = args[i + 1];
 
+            // ‘--’ 없이 토큰 시작하는 옵션 형식 위반 예외
             if (!option.startsWith("--"))
                 throw new IllegalArgumentException("[ERROR] 옵션은 '--'으로 시작해야 합니다: " + option);
+            // 지원하지 않는 옵션 예외
             if (!allowed.contains(option))
                 throw new IllegalArgumentException("[EROR] 지원하지 않는 옵션입니다: " + option);
+            // 옵션 중복 예외
             if (!seen.add(option))
                 throw new IllegalArgumentException(("[ERROR] 옵션이 중복되었습니다: " + option));
+            // 옵션 값 누락 예외
             if (value == null || value.isBlank() || value.startsWith("--"))
                 throw new IllegalArgumentException("[ERROR] 옵션의 값이 없습니다: " + option);
         }
 
-        // TODO : 필수 옵션 포함 예외 구현
+        // 필수 옵션 미포함 예외
+        List<String> options = new ArrayList<>();
+        for (int i = 0; i < args.length; i += 2)
+            options.add(args[i]);
+        if (options.contains("--input"))
+            throw new IllegalArgumentException("[ERROR] --input은 필수입니다.");
+        if (options.contains("--root-class"))
+            throw new IllegalArgumentException("[ERROR] --root-class는 필수입니다.");
+        if (options.contains("--package"))
+            throw new IllegalArgumentException("[ERROR] --package는 필수입니다.");
+        if (options.contains("--out"))
+            throw new IllegalArgumentException("[ERROR] --out은 필수입니다.");
     }
 
     private void validateValues(String[] args) {
