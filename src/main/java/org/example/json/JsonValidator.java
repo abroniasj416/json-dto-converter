@@ -4,10 +4,49 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public final class JsonValidator {
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private JsonValidator() {}
+
+    // CLI --input 파일 전용: 파일 검사 + UTF-8/BOM 처리 + JSON 파싱 + 루트 타입 확인
+    public static Result validateAndLoad(String inputPath) {
+        Path path = Paths.get(inputPath).toAbsolutePath().normalize();
+
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            throw new IllegalArgumentException("[ERROR] --input 경로가 존재하지 않거나 파일이 아닙니다: " + path);
+        }
+        if (!Files.isReadable(path)) {
+            throw new IllegalArgumentException("[ERROR] --input 파일을 읽을 수 없습니다: " + path);
+        }
+
+        try {
+            long size = Files.size(path);
+            if (size > MAX_FILE_SIZE) {
+                throw new IllegalArgumentException("[ERROR] --input 파일 크기가 너무 큽니다(최대 5MB): " + path);
+            }
+
+            byte[] bytes = Files.readAllBytes(path);
+            boolean hadBom = hasUtf8Bom(bytes);
+            String json = new String(hadBom ? stripBom(bytes) : bytes, StandardCharsets.UTF_8);
+
+            JsonNode root = assertValidAndParse(json, path.toString());
+            if (!root.isObject() && !root.isArray()) {
+                throw new IllegalArgumentException("[ERROR] 루트 타입이 객체 또는 배열이어야 합니다: " + path);
+            }
+
+            return new Result(root, hadBom, size);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("[ERROR] --input 파일을 읽는 중 오류가 발생했습니다: " + path, e);
+        }
+    }
 
     // 문자열 JSON 유효성 검증 + 파싱 (파일 I/O 없음)
     public static JsonNode assertValidAndParse(String json, String sourceNameForMsg) {
