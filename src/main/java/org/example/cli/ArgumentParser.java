@@ -159,7 +159,8 @@ public class ArgumentParser {
             }
             // TODO : --inner-classes: 불리언(true, false) 형식 확인
             if (option.equals("--inner-classes")) {
-
+                if (!value.equalsIgnoreCase("true") && !value.equalsIgnoreCase("false"))
+                    throw new IllegalArgumentException("[ERROR] --inner-classes 옵션은 true 또는 false만 허용됩니다: " + value);
             }
         }
     }
