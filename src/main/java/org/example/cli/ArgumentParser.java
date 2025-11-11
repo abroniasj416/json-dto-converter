@@ -153,9 +153,9 @@ public class ArgumentParser {
                 JsonNode root = JsonValidator.assertValidAndParse(json, path.toString());
                 // TODO : parse(...)에서 root를 저장할지, 나중 단계(JsonAnalyzer)로 넘길지는 설계에 맞춰 결정할 예정
             }
-            // TODO : --out: 디렉터리/생성/쓰기 가능 (FileValidator.validateOutDir)
+            // --out: 디렉터리/생성/쓰기 가능 예외
             if (option.equals("--out")) {
-
+                FileValidator.validateOutDirectory(value);
             }
             // TODO : --inner-classes: 불리언(true, false) 형식 확인
             if (option.equals("--inner-classes")) {
