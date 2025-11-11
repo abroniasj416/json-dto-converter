@@ -87,7 +87,7 @@ public class ArgumentParser {
                 throw new IllegalArgumentException("[ERROR] 옵션은 '--'으로 시작해야 합니다: " + option);
             // 지원하지 않는 옵션 예외
             if (!allowed.contains(option))
-                throw new IllegalArgumentException("[EROR] 지원하지 않는 옵션입니다: " + option);
+                throw new IllegalArgumentException("[ERROR] 지원하지 않는 옵션입니다: " + option);
             // 옵션 중복 예외
             if (!seen.add(option))
                 throw new IllegalArgumentException(("[ERROR] 옵션이 중복되었습니다: " + option));
@@ -100,13 +100,13 @@ public class ArgumentParser {
         List<String> options = new ArrayList<>();
         for (int i = 0; i < args.length; i += 2)
             options.add(args[i]);
-        if (options.contains("--input"))
+        if (!options.contains("--input"))
             throw new IllegalArgumentException("[ERROR] --input은 필수입니다.");
-        if (options.contains("--root-class"))
+        if (!options.contains("--root-class"))
             throw new IllegalArgumentException("[ERROR] --root-class는 필수입니다.");
-        if (options.contains("--package"))
+        if (!options.contains("--package"))
             throw new IllegalArgumentException("[ERROR] --package는 필수입니다.");
-        if (options.contains("--out"))
+        if (!options.contains("--out"))
             throw new IllegalArgumentException("[ERROR] --out은 필수입니다.");
     }
 
@@ -148,10 +148,7 @@ public class ArgumentParser {
             }
             // --input: 존재/읽기/JSON 파싱 가능
             if (option.equals("--input")) {
-                Path path = FileValidator.validateReadableFile(value);
-                String json = FileValidator.readUtf8(path);
-                JsonNode root = JsonValidator.assertValidAndParse(json, path.toString());
-                // TODO : parse(...)에서 root를 저장할지, 나중 단계(JsonAnalyzer)로 넘길지는 설계에 맞춰 결정할 예정
+                JsonValidator.validateAndLoad(value);
             }
             // --out: 디렉터리/생성/쓰기 가능 예외
             if (option.equals("--out")) {
