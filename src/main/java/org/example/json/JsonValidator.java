@@ -41,4 +41,20 @@ public final class JsonValidator {
         System.arraycopy(bytes, 3, result, 0, result.length);
         return result;
     }
+
+    // 결과 DTO
+    public static class Result {
+        private final JsonNode root;
+        private final boolean hadBom;
+        private final long sizeBytes;
+
+        public Result(JsonNode root, boolean hadBom, long sizeBytes) {
+            this.root = root;
+            this.hadBom = hadBom;
+            this.sizeBytes = sizeBytes;
+        }
+        public JsonNode root() { return root; }
+        public boolean hadBom() { return hadBom; }
+        public long sizeBytes() { return sizeBytes; }
+    }
 }
