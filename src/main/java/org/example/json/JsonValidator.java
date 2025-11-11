@@ -29,4 +29,16 @@ public final class JsonValidator {
                 (bytes[1] & 0xFF) == 0xBB &&
                 (bytes[2] & 0xFF) == 0xBF;
     }
+
+    /**
+     * UTF-8 BOM(0xEF 0xBB 0xBF)이 존재할 경우
+     * 해당 3바이트를 제거한 새로운 바이트 배열을 반환한다.
+     * BOM이 없으면 원본 배열을 그대로 반환한다.
+     */
+    private static byte[] stripBom(byte[] bytes) {
+        if (!hasUtf8Bom(bytes)) return bytes;
+        byte[] result = new byte[bytes.length - 3];
+        System.arraycopy(bytes, 3, result, 0, result.length);
+        return result;
+    }
 }
