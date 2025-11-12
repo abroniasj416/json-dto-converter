@@ -68,10 +68,34 @@ public final class JsonAnalyzer {
     }
 
     /** 스키마 병합 스텁 */
-    // TODO : 구체화
     private SchemaNode mergeSchemas(SchemaNode a, SchemaNode b) {
         if (a == null) return b;
         if (b == null) return a;
-        return a; // 임시: 다음 커밋에서 실제 규칙 구현
+
+        // Primitive <--> Primitive
+        if (a instanceof SchemaPrimitive && b instanceof SchemaPrimitive) {
+            SchemaPrimitive pa = (SchemaPrimitive) a;
+            SchemaPrimitive pb = (SchemaPrimitive) b;
+            return (pa.pkind() == pb.pkind()) ? pa : unionOf(pa, pb);
+        }
+
+        // TODO : Object/Object, Array/Array
+        if (a instanceof SchemaUnion) {
+            ((SchemaUnion) a).addVariant(b);
+            return a;
+        }
+        if (b instanceof SchemaUnion) {
+            ((SchemaUnion) b).addVariant(a);
+            return b;
+        }
+
+        return unionOf(a, b);
+    }
+
+    private SchemaUnion unionOf(SchemaNode x, SchemaNode y) {
+        SchemaUnion u = new SchemaUnion();
+        u.addVariant(x);
+        u.addVariant(y);
+        return u;
     }
 }
