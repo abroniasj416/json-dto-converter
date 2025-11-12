@@ -137,6 +137,20 @@ public final class JsonAnalyzer {
         return merged;
     }
 
+    /** 객체의 관찰된 총 샘플 수 추정: 필드들의 totalSamples 중 최댓값 사용(안전장치 포함) */
+    private int estimateObjectTotalSamples(SchemaObject obj) {
+        int max = 0;
+        for (SchemaObject.FieldInfo fi : obj.fields().values()) {
+            if (fi.totalSamples() > max) {
+                max = fi.totalSamples();
+            }
+        }
+        if (max == 0) {
+            return 1; // 필드가 비어있거나 0으로만 기록된 경우: 최소 1회 관찰로 가정
+        }
+        return max;
+    }
+
     private SchemaUnion unionOf(SchemaNode x, SchemaNode y) {
         SchemaUnion u = new SchemaUnion();
         u.addVariant(x);
