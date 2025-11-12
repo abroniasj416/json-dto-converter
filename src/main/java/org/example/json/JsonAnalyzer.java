@@ -17,6 +17,10 @@ public final class JsonAnalyzer {
 
     /** 내부 방문 함수(1차: 프리미티브만 처리) */
     private SchemaNode visit(JsonNode n) {
+        if (n.isObject()) {
+            return visitObject(n);
+        }
+
         if (n.isTextual())  return new SchemaPrimitive(SchemaPrimitive.PKind.STRING);
         if (n.isNumber())   return new SchemaPrimitive(SchemaPrimitive.PKind.NUMBER);
         if (n.isBoolean())  return new SchemaPrimitive(SchemaPrimitive.PKind.BOOLEAN);
@@ -24,5 +28,17 @@ public final class JsonAnalyzer {
 
         // object/array 등은 다음 커밋에서 처리
         return new SchemaPrimitive(SchemaPrimitive.PKind.STRING);
+    }
+
+    private SchemaNode visitObject(JsonNode obj) {
+        SchemaObject so = new SchemaObject();
+        java.util.Iterator<String> it = obj.fieldNames();
+        while (it.hasNext()) {
+            String name = it.next();
+            JsonNode child = obj.get(name);
+            SchemaNode childSchema = visit(child);
+            so.fields().put(name, SchemaObject.FieldInfo.presentOnce(childSchema));
+        }
+        return so;
     }
 }
