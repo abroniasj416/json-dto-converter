@@ -89,6 +89,10 @@ public final class JsonAnalyzer {
             return mergeObjects((SchemaObject) a, (SchemaObject) b);
         }
 
+        if (a instanceof SchemaArray && b instanceof SchemaArray) {
+            return mergeArrays((SchemaArray) a, (SchemaArray) b);
+        }
+
         if (a instanceof SchemaUnion) {
             ((SchemaUnion) a).addVariant(b);
             return a;
@@ -149,6 +153,14 @@ public final class JsonAnalyzer {
             return 1; // 필드가 비어있거나 0으로만 기록된 경우: 최소 1회 관찰로 가정
         }
         return max;
+    }
+
+    private SchemaNode mergeArrays(SchemaArray left, SchemaArray right) {
+        SchemaArray merged = new SchemaArray();
+        merged.setEmpty(left.isEmpty() || right.isEmpty());
+        merged.elementTypes().addAll(left.elementTypes());
+        merged.elementTypes().addAll(right.elementTypes());
+        return merged;
     }
 
     private SchemaUnion unionOf(SchemaNode x, SchemaNode y) {
