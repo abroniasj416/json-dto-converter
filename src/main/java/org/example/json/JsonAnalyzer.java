@@ -15,6 +15,13 @@ public final class JsonAnalyzer {
         return visit(root);
     }
 
+    public SchemaNode analyze(JsonValidator.Result result) {
+        if (result == null || result.root() == null) {
+            return new SchemaPrimitive(SchemaPrimitive.PKind.NULL);
+        }
+        return analyze(result.root());
+    }
+
     /** 내부 방문 함수(1차: 프리미티브만 처리) */
     private SchemaNode visit(JsonNode n) {
         if (n.isObject()) {
