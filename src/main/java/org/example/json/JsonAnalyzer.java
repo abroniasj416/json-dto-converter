@@ -21,6 +21,10 @@ public final class JsonAnalyzer {
             return visitObject(n);
         }
 
+        if (n.isArray()) {
+            return visitArray(n);
+        }
+
         if (n.isTextual())  return new SchemaPrimitive(SchemaPrimitive.PKind.STRING);
         if (n.isNumber())   return new SchemaPrimitive(SchemaPrimitive.PKind.NUMBER);
         if (n.isBoolean())  return new SchemaPrimitive(SchemaPrimitive.PKind.BOOLEAN);
@@ -40,5 +44,34 @@ public final class JsonAnalyzer {
             so.fields().put(name, SchemaObject.FieldInfo.presentOnce(childSchema));
         }
         return so;
+    }
+
+    private SchemaNode visitArray(JsonNode arr) {
+        SchemaArray sa = new SchemaArray();
+        if (arr.size() == 0) {
+            sa.setEmpty(true);
+            return sa;
+        }
+
+        SchemaNode acc = null;
+        for (JsonNode elem : arr) {
+            SchemaNode elemSchema = visit(elem);
+            acc = (acc == null) ? elemSchema : mergeSchemas(acc, elemSchema);
+        }
+
+        if (acc instanceof SchemaUnion) {
+            sa.elementTypes().addAll(((SchemaUnion) acc).variants());
+        } else {
+            sa.elementTypes().add(acc);
+        }
+        return sa;
+    }
+
+    /** 스키마 병합 스텁 */
+    // TODO : 구체화
+    private SchemaNode mergeSchemas(SchemaNode a, SchemaNode b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return a; // 임시: 다음 커밋에서 실제 규칙 구현
     }
 }
