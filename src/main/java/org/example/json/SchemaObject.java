@@ -16,8 +16,14 @@ public final class SchemaObject extends SchemaNode {
         }
 
         public SchemaNode schema() { return schema; }
+        public void setSchema(SchemaNode schema) { this.schema = schema; }
         public int presentCount() { return presentCount; }
         public int totalSamples() { return totalSamples; }
+        public boolean optional() { return presentCount < totalSamples; }
+
+        public static FieldInfo presentOnce(SchemaNode schema) {
+            return new FieldInfo(schema, 1, 1);
+        }
     }
 
     private final Map<String, FieldInfo> fields = new LinkedHashMap<>();
