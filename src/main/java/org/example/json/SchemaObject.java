@@ -24,6 +24,15 @@ public final class SchemaObject extends SchemaNode {
         public static FieldInfo presentOnce(SchemaNode schema) {
             return new FieldInfo(schema, 1, 1);
         }
+
+        public void observePresent() {
+            this.presentCount += 1;
+            this.totalSamples += 1;
+        }
+
+        public void observeAbsent() {
+            this.totalSamples += 1;
+        }
     }
 
     private final Map<String, FieldInfo> fields = new LinkedHashMap<>();
