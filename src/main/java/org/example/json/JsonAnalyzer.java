@@ -67,7 +67,13 @@ public final class JsonAnalyzer {
         return sa;
     }
 
-    /** 스키마 병합 스텁 */
+    /**
+     * 두 스키마 노드를 병합하여 변동성을 포착한다.
+     * - Primitive/Primitive: 종류가 다르면 Union
+     * - Object/Object: 필드 단위로 present/total 합산 및 재귀 병합
+     * - Array/Array: elementTypes 합집합(1차 버전 단순화)
+     * - 서로 다른 종류: Union으로 승격
+     */
     private SchemaNode mergeSchemas(SchemaNode a, SchemaNode b) {
         if (a == null) return b;
         if (b == null) return a;
@@ -79,7 +85,10 @@ public final class JsonAnalyzer {
             return (pa.pkind() == pb.pkind()) ? pa : unionOf(pa, pb);
         }
 
-        // TODO : Object/Object, Array/Array
+        if (a instanceof SchemaObject && b instanceof SchemaObject) {
+            return mergeObjects((SchemaObject) a, (SchemaObject) b);
+        }
+
         if (a instanceof SchemaUnion) {
             ((SchemaUnion) a).addVariant(b);
             return a;
@@ -90,6 +99,42 @@ public final class JsonAnalyzer {
         }
 
         return unionOf(a, b);
+    }
+
+    private SchemaNode mergeObjects(SchemaObject left, SchemaObject right) {
+        SchemaObject merged = new SchemaObject();
+
+        java.util.Set<String> rightNames = new java.util.HashSet<>(right.fields().keySet());
+
+        for (java.util.Map.Entry<String, SchemaObject.FieldInfo> e : left.fields().entrySet()) {
+            String name = e.getKey();
+            SchemaObject.FieldInfo lf = e.getValue();
+
+            if (right.fields().containsKey(name)) {
+                SchemaObject.FieldInfo rf = right.fields().get(name);
+                SchemaNode mergedSchema = mergeSchemas(lf.schema(), rf.schema());
+                int present = lf.presentCount() + rf.presentCount();
+                int total = lf.totalSamples() + rf.totalSamples();
+                merged.fields().put(name, new SchemaObject.FieldInfo(mergedSchema, present, total));
+                rightNames.remove(name);
+            } else {
+                int rightTotal = estimateObjectTotalSamples(right);
+                int present = lf.presentCount();
+                int total = lf.totalSamples() + rightTotal;
+                merged.fields().put(name, new SchemaObject.FieldInfo(lf.schema(), present, total));
+            }
+        }
+
+        int leftTotal = estimateObjectTotalSamples(left);
+        int rightTotal = estimateObjectTotalSamples(right);
+        for (String name : rightNames) {
+            SchemaObject.FieldInfo rf = right.fields().get(name);
+            int present = rf.presentCount();
+            int total = leftTotal + rightTotal;
+            merged.fields().put(name, new SchemaObject.FieldInfo(rf.schema(), present, total));
+        }
+
+        return merged;
     }
 
     private SchemaUnion unionOf(SchemaNode x, SchemaNode y) {
