@@ -148,10 +148,76 @@ public final class ModelGraph {
     // =====================================================================
 
     /**
-     * 하나의 Java 필드를 표현하는 이너클래스.
-     * 현재는 뼈대만 두고, 이후 커밋에서 상세 구현을 추가한다.
+     * 하나의 Java 필드를 표현하는 불변 객체.
+     *
+     * <ul>
+     *     <li>jsonName: 원래 JSON 키 이름 (예: "temp_c")</li>
+     *     <li>fieldName: Java 필드 이름 (예: "tempC")</li>
+     *     <li>typeName: Java 타입 이름 (예: "double", "String", "List<Student>")</li>
+     *     <li>nullable: JSON 상에서 null/누락 가능 여부</li>
+     * </ul>
      */
     public static final class Field {
-        // 이후 커밋에서 구현
+
+        private final String jsonName;
+        private final String fieldName;
+        private final String typeName;
+        private final boolean nullable;
+
+        /**
+         * @param jsonName  JSON 키 이름
+         * @param fieldName Java 필드 이름
+         * @param typeName  Java 타입 이름 (예: "String", "int", "List<Article>")
+         * @param nullable  값이 null/누락될 수 있는지 여부
+         */
+        public Field(String jsonName, String fieldName, String typeName, boolean nullable) {
+            this.jsonName = Objects.requireNonNull(jsonName, "jsonName must not be null");
+            this.fieldName = Objects.requireNonNull(fieldName, "fieldName must not be null");
+            this.typeName = Objects.requireNonNull(typeName, "typeName must not be null");
+            this.nullable = nullable;
+        }
+
+        /**
+         * 원본 JSON 키 이름.
+         */
+        public String getJsonName() {
+            return jsonName;
+        }
+
+        /**
+         * Java 필드 이름.
+         */
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        /**
+         * Java 타입 이름 (예: "String", "int", "List<Article>").
+         *
+         * <p>실제 코드 생성 시에는 이 문자열이 그대로
+         * 필드 선언에 사용된다.</p>
+         */
+        public String getTypeName() {
+            return typeName;
+        }
+
+        /**
+         * 이 필드가 null/누락 가능하면 true.
+         * 예: 일부 객체에서만 등장하는 필드, "null"이 자주 나오는 필드 등.
+         */
+        public boolean isNullable() {
+            return nullable;
+        }
+
+        @Override
+        public String toString() {
+            return "Field{" +
+                    "jsonName='" + jsonName + '\'' +
+                    ", fieldName='" + fieldName + '\'' +
+                    ", typeName='" + typeName + '\'' +
+                    ", nullable=" + nullable +
+                    '}';
+        }
     }
+
 }
