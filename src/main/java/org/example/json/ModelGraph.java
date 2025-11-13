@@ -3,9 +3,11 @@ package org.example.json;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * ModelGraph
@@ -28,7 +30,10 @@ public final class ModelGraph {
 
     private ModelGraph(ModelClass rootClass, Map<String, ModelClass> classesByQualifiedName) {
         this.rootClass = Objects.requireNonNull(rootClass, "rootClass must not be null");
-        this.classesByQualifiedName = Objects.requireNonNull(classesByQualifiedName, "classesByQualifiedName must not be null");
+        Map<String, ModelClass> copy = new LinkedHashMap<>(
+                Objects.requireNonNull(classesByQualifiedName, "classesByQualifiedName must not be null")
+        );
+        this.classesByQualifiedName = Collections.unmodifiableMap(copy);
     }
 
     /**
