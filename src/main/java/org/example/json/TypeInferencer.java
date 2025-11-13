@@ -1,6 +1,7 @@
 package org.example.json;
 
-import java.util.IdentityHashMap;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 
 /**
@@ -59,6 +60,40 @@ public class TypeInferencer {
     public Map<SchemaNode, TypeRef> inferTypes(SchemaNode root, String rootClassName) {
         if (root == null) throw new IllegalArgumentException("root node is null");
         if (rootClassName == null || rootClassName.isBlank()) rootClassName = "Root";
-        return new IdentityHashMap<>();
+        Map<SchemaNode, TypeRef> result = new java.util.IdentityHashMap<>();
+        Deque<String> path = new ArrayDeque<>();
+        inferRecursive(root, new DefaultNameConverter().toPascalCase(rootClassName), path, result);
+        return result;
     }
+
+    private TypeRef inferRecursive(SchemaNode node, String suggestedClassName,
+                                   java.util.Deque<String> path, java.util.Map<SchemaNode, TypeRef> acc) {
+        if (node instanceof SchemaPrimitive) {
+            TypeRef t = inferPrimitive((SchemaPrimitive) node);
+            acc.put(node, t);
+            return t;
+        }
+        if (node instanceof SchemaArray) {
+            // 다음 커밋에서 구현
+            TypeRef t = new TypeRef("Object", java.util.Set.of(), false, false);
+            acc.put(node, t);
+            return t;
+        }
+        if (node instanceof SchemaObject) {
+            // 다음 커밋에서 구현
+            TypeRef t = new TypeRef("Object", java.util.Set.of(), false, false);
+            acc.put(node, t);
+            return t;
+        }
+        if (node instanceof SchemaUnion) {
+            // 다음 커밋에서 구현
+            TypeRef t = new TypeRef("Object", java.util.Set.of(), false, false);
+            acc.put(node, t);
+            return t;
+        }
+        TypeRef t = new TypeRef("Object", java.util.Set.of(), false, false);
+        acc.put(node, t);
+        return t;
+    }
+
 }
