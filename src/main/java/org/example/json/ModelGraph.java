@@ -79,6 +79,15 @@ public final class ModelGraph {
     }
 
     /**
+     * FQCN(qualified name)으로 클래스 조회.
+     * 예: "com.example.dto.WeatherApiResponse"
+     */
+    public Optional<ModelClass> findClass(String qualifiedName) {
+        Objects.requireNonNull(qualifiedName, "qualifiedName must not be null");
+        return Optional.ofNullable(classesByQualifiedName.get(qualifiedName));
+    }
+
+    /**
      * 그래프에 포함된 클래스 개수.
      */
     public int size() {
