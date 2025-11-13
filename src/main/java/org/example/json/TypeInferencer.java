@@ -72,10 +72,30 @@ public class TypeInferencer {
             return t;
         }
         if (node instanceof SchemaArray) {
-            // 다음 커밋에서 구현
-            TypeRef t = new TypeRef("Object", Set.of(), false, false);
-            acc.put(node, t);
-            return t;
+            SchemaArray arrayNode = (SchemaArray) node;
+
+            TypeRef elementType;
+
+            // 1) 빈 배열만 관찰된 경우 → 원소 타입을 추론할 수 없으므로 Object
+            if (arrayNode.elementTypes().isEmpty()) {
+                elementType = new TypeRef("Object", Set.of(), false, false);
+
+                // 2) 한 가지 타입만 관찰된 경우 → 그 타입을 재귀적으로 추론
+            } else if (arrayNode.elementTypes().size() == 1) {
+                SchemaNode singleElementSchema = arrayNode.elementTypes().iterator().next();
+                path.addLast("Item");
+                elementType = inferRecursive(singleElementSchema, suggestedClassName + "Item", path, acc);
+                path.removeLast();
+
+                // 3) 여러 타입이 섞여 있는 배열 → 1차 버전에서는 보수적으로 Object로 처리
+            } else {
+                elementType = new TypeRef("Object", Set.of(), false, false);
+            }
+
+            // List<T>로 감싸고 java.util.List import 필요 표시
+            TypeRef listType = elementType.withGeneric("List", "java.util.List");
+            acc.put(node, listType);
+            return listType;
         }
         if (node instanceof SchemaObject) {
             // 다음 커밋에서 구현
