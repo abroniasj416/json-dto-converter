@@ -56,8 +56,7 @@ public class TypeInferencer {
         @Override public String toString() { return javaType; }
     }
 
-    // 공개 API 스텁 (다음 커밋에서 실제 로직 추가)
-    public Map<SchemaNode, Object> inferTypes(SchemaNode root, String rootClassName) {
+    public Map<SchemaNode, TypeRef> inferTypes(SchemaNode root, String rootClassName) {
         if (root == null) throw new IllegalArgumentException("root node is null");
         if (rootClassName == null || rootClassName.isBlank()) rootClassName = "Root";
         return new IdentityHashMap<>();
