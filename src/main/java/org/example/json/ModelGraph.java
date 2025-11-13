@@ -37,6 +37,34 @@ public final class ModelGraph {
     }
 
     /**
+     * 루트 클래스와 전체 클래스 컬렉션으로 ModelGraph를 만든다.
+     *
+     * @param rootClass  그래프의 루트에 해당하는 클래스 (예: WeatherApiResponse)
+     * @param allClasses 생성 대상 전체 클래스 컬렉션 (rootClass 포함)
+     * @return ModelGraph 인스턴스
+     */
+    public static ModelGraph of(ModelClass rootClass, Collection<ModelClass> allClasses) {
+        Objects.requireNonNull(rootClass, "rootClass must not be null");
+        Objects.requireNonNull(allClasses, "allClasses must not be null");
+
+        Map<String, ModelClass> map = new LinkedHashMap<>();
+        for (ModelClass modelClass : allClasses) {
+            String qualifiedName = modelClass.getQualifiedName();
+            if (map.containsKey(qualifiedName)) {
+                throw new IllegalArgumentException("Duplicate model class qualified name: " + qualifiedName);
+            }
+            map.put(qualifiedName, modelClass);
+        }
+
+        String rootQualifiedName = rootClass.getQualifiedName();
+        if (!map.containsKey(rootQualifiedName)) {
+            map.put(rootQualifiedName, rootClass);
+        }
+
+        return new ModelGraph(rootClass, map);
+    }
+
+    /**
      * 그래프의 루트 클래스(엔트리 포인트)를 반환한다.
      */
     public ModelClass getRootClass() {
