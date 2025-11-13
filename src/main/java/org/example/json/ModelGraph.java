@@ -1,6 +1,9 @@
 package org.example.json;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -67,12 +70,78 @@ public final class ModelGraph {
     // =====================================================================
 
     /**
-     * 실제로 생성될 Java 클래스 한 개를 표현하는 이너클래스.
-     * 현재는 뼈대만 두고, 이후 커밋에서 상세 구현을 추가한다.
+     * 실제로 생성될 Java 클래스 한 개를 표현하는 불변 객체.
      */
     public static final class ModelClass {
-        // 이후 커밋에서 구현
+
+        private final String packageName;
+        private final String simpleName;
+        private final boolean root;
+        private final List<Field> fields;
+
+        /**
+         * @param packageName 패키지 이름 (예: "com.example.dto")
+         * @param simpleName  클래스 이름 (예: "WeatherApiResponse")
+         * @param fields      필드 목록
+         * @param root        루트 클래스 여부
+         */
+        public ModelClass(String packageName, String simpleName, List<Field> fields, boolean root) {
+            this.packageName = Objects.requireNonNull(packageName, "packageName must not be null");
+            this.simpleName = Objects.requireNonNull(simpleName, "simpleName must not be null");
+            this.root = root;
+            Objects.requireNonNull(fields, "fields must not be null");
+            // 필드 순서 고정 + 불변 리스트로 래핑
+            this.fields = Collections.unmodifiableList(new ArrayList<>(fields));
+        }
+
+        /**
+         * 패키지 이름 (예: "com.example.dto")
+         */
+        public String getPackageName() {
+            return packageName;
+        }
+
+        /**
+         * 단순 클래스 이름 (예: "WeatherApiResponse")
+         */
+        public String getSimpleName() {
+            return simpleName;
+        }
+
+        /**
+         * "com.example.dto.WeatherApiResponse" 형태의 FQCN
+         */
+        public String getQualifiedName() {
+            if (packageName.isEmpty()) {
+                return simpleName;
+            }
+            return packageName + '.' + simpleName;
+        }
+
+        /**
+         * 이 클래스가 루트 클래스(엔트리 포인트)인지 여부.
+         */
+        public boolean isRoot() {
+            return root;
+        }
+
+        /**
+         * 클래스가 가진 필드들을 선언 순서대로 반환한다.
+         */
+        public List<Field> getFields() {
+            return fields;
+        }
+
+        @Override
+        public String toString() {
+            return "ModelClass{" +
+                    "qualifiedName='" + getQualifiedName() + '\'' +
+                    ", root=" + root +
+                    ", fields=" + fields +
+                    '}';
+        }
     }
+
 
     // =====================================================================
     //  Field
