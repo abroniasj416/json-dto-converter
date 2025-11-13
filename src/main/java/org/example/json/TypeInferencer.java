@@ -60,7 +60,7 @@ public class TypeInferencer {
         if (rootClassName == null || rootClassName.isBlank()) rootClassName = "Root";
         Map<SchemaNode, TypeRef> result = new IdentityHashMap<>();
         Deque<String> path = new ArrayDeque<>();
-        inferRecursive(root, new DefaultNameConverter().toPascalCase(rootClassName), path, result);
+        inferRecursive(root, nameConverter.toPascalCase(rootClassName), path, result);
         return result;
     }
 
