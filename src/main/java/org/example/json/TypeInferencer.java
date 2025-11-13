@@ -125,11 +125,33 @@ public class TypeInferencer {
             return typeRef;
         }
         if (node instanceof SchemaUnion) {
-            // 다음 커밋에서 구현
-            TypeRef t = new TypeRef("Object", Set.of(), false, false);
-            acc.put(node, t);
-            return t;
+            SchemaUnion unionNode = (SchemaUnion) node;
+
+            // Set<SchemaNode> variants = unionNode.variants();
+            Set<SchemaNode> variantSet = unionNode.variants();
+            if (variantSet == null || variantSet.isEmpty()) {
+                TypeRef typeRef = new TypeRef("Object", Set.of(), false, false);
+                acc.put(node, typeRef);
+                return typeRef;
+            }
+
+            // Set → List로 변환해서 인덱스 부여
+            List<SchemaNode> variants = new ArrayList<>(variantSet);
+
+            List<TypeRef> refs = new ArrayList<>();
+            for (int i = 0; i < variants.size(); i++) {
+                SchemaNode child = variants.get(i);
+                path.addLast("Alt" + i);
+                refs.add(inferRecursive(child, suggestedClassName + "Alt" + i, path, acc));
+                path.removeLast();
+            }
+
+            TypeRef merged = mergeUnion(refs);
+            acc.put(node, merged);
+            return merged;
         }
+
+
         TypeRef t = new TypeRef("Object", Set.of(), false, false);
         acc.put(node, t);
         return t;
@@ -157,6 +179,70 @@ public class TypeInferencer {
                 return new TypeRef("Object", Set.of(), false, false);
         }
     }
+
+    /** Union 병합 규칙: 동일/숫자/리스트/문자열 혼합을 우선 처리, 불가하면 Object */
+    private TypeRef mergeUnion(List<TypeRef> refs) {
+        boolean allSame = refs.stream().map(TypeRef::getJavaType).distinct().count() == 1;
+        if (allSame) return refs.get(0);
+
+        boolean allList = refs.stream().allMatch(TypeRef::isList);
+        if (allList) {
+            List<String> elemTypes = new ArrayList<>();
+            for (TypeRef r : refs) elemTypes.add(extractGenericArgument(r.getJavaType()));
+            String mergedElem = mergeElementTypes(elemTypes);
+            if (mergedElem != null) {
+                Set<String> imps = new LinkedHashSet<>();
+                for (TypeRef r : refs) imps.addAll(r.getRequiredImports());
+                imps.add("java.util.List");
+                return new TypeRef("List<" + mergedElem + ">", imps, false, true);
+            }
+        }
+
+        if (refs.stream().allMatch(r -> isNumericLike(r.getJavaType()))) {
+            return new TypeRef("Double", Set.of(), false, false);
+        }
+
+        boolean hasString = refs.stream().anyMatch(r -> "String".equals(r.getJavaType()));
+        boolean onlyStringOrNullOrObject = refs.stream().allMatch(r ->
+                "String".equals(r.getJavaType()) || "Object".equals(r.getJavaType()));
+        if (hasString && onlyStringOrNullOrObject) {
+            return new TypeRef("String", Set.of(), false, false);
+        }
+
+        boolean anyObject = refs.stream().anyMatch(TypeRef::isObject);
+        if (anyObject) {
+            return new TypeRef("Object", Set.of(), false, false);
+        }
+
+        return new TypeRef("Object", Set.of(), false, false);
+    }
+
+    private boolean isNumericLike(String t) {
+        return "Integer".equals(t) || "Long".equals(t) || "Double".equals(t);
+    }
+
+    private String extractGenericArgument(String listType) {
+        int lt = listType.indexOf('<');
+        int gt = listType.lastIndexOf('>');
+        if (lt >= 0 && gt > lt) return listType.substring(lt + 1, gt).trim();
+        return null;
+    }
+
+    private String mergeElementTypes(List<String> elems) {
+        if (elems.stream().filter(Objects::nonNull).distinct().count() == 1)
+            return elems.get(0);
+
+        if (elems.stream().allMatch(this::isNumericLike))
+            return "Double";
+
+        boolean hasString = elems.stream().anyMatch("String"::equals);
+        boolean onlyStringOrNull = elems.stream().allMatch(t ->
+                t == null || "String".equals(t) || "Object".equals(t));
+        if (hasString && onlyStringOrNull) return "String";
+
+        return "Object";
+    }
+
 
     /** 경로 기반 클래스명 생성 */
     private String buildClassNameFromPath(Deque<String> path) {
