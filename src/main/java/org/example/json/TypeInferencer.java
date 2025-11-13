@@ -98,10 +98,31 @@ public class TypeInferencer {
             return listType;
         }
         if (node instanceof SchemaObject) {
-            // 다음 커밋에서 구현
-            TypeRef t = new TypeRef("Object", Set.of(), false, false);
-            acc.put(node, t);
-            return t;
+            SchemaObject objectNode = (SchemaObject) node;
+
+            // 클래스 이름 결정
+            String className = (suggestedClassName != null && !suggestedClassName.isBlank())
+                    ? nameConverter.toPascalCase(suggestedClassName)
+                    : buildClassNameFromPath(path);
+
+            // 필드 순회: Map<String, FieldInfo>
+            for (Map.Entry<String, SchemaObject.FieldInfo> entry : objectNode.fields().entrySet()) {
+                String fieldName = entry.getKey();
+                SchemaObject.FieldInfo fieldInfo = entry.getValue();
+                SchemaNode fieldSchema = fieldInfo.schema();
+
+                path.addLast(fieldName);
+
+                // 자식 클래스 이름: 현재 클래스명 + 필드명(PascalCase)
+                String childClassName = className + nameConverter.toPascalCase(fieldName);
+                inferRecursive(fieldSchema, childClassName, path, acc);
+
+                path.removeLast();
+            }
+
+            TypeRef typeRef = new TypeRef(className, Set.of(), true, false);
+            acc.put(node, typeRef);
+            return typeRef;
         }
         if (node instanceof SchemaUnion) {
             // 다음 커밋에서 구현
@@ -137,6 +158,12 @@ public class TypeInferencer {
         }
     }
 
-
+    /** 경로 기반 클래스명 생성 */
+    private String buildClassNameFromPath(Deque<String> path) {
+        if (path == null || path.isEmpty()) return "AutoClass";
+        StringBuilder sb = new StringBuilder();
+        for (String p : path) sb.append(nameConverter.toPascalCase(p));
+        return sb.toString();
+    }
 
 }
