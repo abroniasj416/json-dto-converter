@@ -110,4 +110,22 @@ class ArgumentParserTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("--root-class 값이 유효한 자바 클래스명이 아닙니다");
     }
+
+    @Test
+    void package가_유효하지_않으면_예외가_발생한다() throws Exception {
+        Path tempJson = createTempJsonFile();
+
+        String[] args = {
+                "--input", tempJson.toString(),
+                "--root-class", "WeatherApiResponse",
+                "--package", "com..invalid", // 빈 세그먼트
+                "--out", "build/generated"
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("--package 값에 빈 세그먼트가 포함되어 있습니다");
+    }
 }
