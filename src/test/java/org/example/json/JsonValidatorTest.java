@@ -35,4 +35,14 @@ class JsonValidatorTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("루트 타입이 객체 또는 배열이어야 합니다");
     }
+
+    @Test
+    void 유효하지_않은_JSON이면_예외가_발생한다() throws Exception {
+        Path temp = Files.createTempFile("broken-json-", ".json");
+        Files.writeString(temp, "{ invalid json", StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> JsonValidator.validateAndLoad(temp.toString()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("유효한 JSON이 아닙니다");
+    }
 }
