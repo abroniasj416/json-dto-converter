@@ -68,4 +68,21 @@ class ArgumentParserTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("지원하지 않는 옵션");
     }
+
+    @Test
+    void 옵션이_중복되면_예외가_발생한다() {
+        String[] args = {
+                "--input", "samples/weatherapi.json",
+                "--input", "samples/other.json",
+                "--root-class", "WeatherApiResponse",
+                "--package", "com.team606.mrdinner.entity",
+                "--out", "build/generated"
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("옵션이 중복되었습니다");
+    }
 }
