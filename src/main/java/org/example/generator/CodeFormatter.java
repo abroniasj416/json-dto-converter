@@ -27,4 +27,18 @@ public class CodeFormatter {
         String withoutWindows = source.replace("\r\n", "\n");
         return withoutWindows.replace("\r", "\n");
     }
+
+    private String trimTrailingWhitespace(String line) {
+        int end = line.length();
+        while (end > 0) {
+            char ch = line.charAt(end - 1);
+            if (ch == ' ' || ch == '\t') {
+                end--;
+            } else {
+                break;
+            }
+        }
+        return (end == line.length()) ? line : line.substring(0, end);
+    }
+
 }
