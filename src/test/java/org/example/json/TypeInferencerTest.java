@@ -48,4 +48,16 @@ class TypeInferencerTest {
         assertThat(ref.isObject()).isTrue();
         assertThat(ref.isList()).isFalse();
     }
+
+    @Test
+    void 유니온_숫자타입들은_Double로_병합된다() {
+        SchemaUnion union = new SchemaUnion();
+        union.addVariant(new SchemaPrimitive(SchemaPrimitive.PKind.NUMBER)); // Double
+        union.addVariant(new SchemaPrimitive(SchemaPrimitive.PKind.NUMBER)); // 동일 타입만 있는 단순 케이스이지만 규칙 확인용
+
+        Map<SchemaNode, TypeInferencer.TypeRef> map = inferencer.inferTypes(union, "Value");
+        TypeInferencer.TypeRef ref = map.get(union);
+
+        assertThat(ref.getJavaType()).isEqualTo("Double");
+    }
 }
