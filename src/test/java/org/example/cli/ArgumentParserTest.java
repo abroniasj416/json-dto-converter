@@ -51,4 +51,21 @@ class ArgumentParserTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("--input은 필수입니다");
     }
+
+    @Test
+    void 지원하지_않는_옵션이_들어오면_예외가_발생한다() {
+        String[] args = {
+                "--input", "samples/weatherapi.json",
+                "--root-class", "WeatherApiResponse",
+                "--unknown", "value",
+                "--out", "build/generated",
+                "--package", "com.team606.mrdinner.entity"
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("지원하지 않는 옵션");
+    }
 }
