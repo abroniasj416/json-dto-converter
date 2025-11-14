@@ -46,17 +46,58 @@ public class Template {
     /**
      * 주어진 변수 맵을 사용해 템플릿을 렌더링한다.
      * <p>
-     * 현재는 아직 플레이스홀더 치환 로직이 구현되지 않았으며,
-     * 전달된 변수 맵의 null 여부만 검증하고 원본 패턴을 그대로 반환한다.
+     * 패턴 안의 <code>${name}</code> 형태 플레이스홀더를 찾아
+     * {@code variables.get("name")} 값으로 치환한다.
+     * <ul>
+     *     <li>맵에 해당 키가 없으면 플레이스홀더를 그대로 남긴다. (치환하지 않음)</li>
+     *     <li>맵 값이 {@code null}이면 빈 문자열로 치환한다.</li>
+     *     <li>닫는 중괄호('}')를 찾지 못하면 <code>$</code> 문자부터 그대로 출력한다.</li>
+     * </ul>
      *
      * @param variables 플레이스홀더 이름과 치환 문자열의 매핑
-     * @return 현재는 치환이 적용되지 않은 원본 패턴 문자열
+     * @return 치환이 적용된 결과 문자열
      */
     public String render(Map<String, String> variables) {
         Objects.requireNonNull(variables, "variables must not be null");
-        // TODO: ${name} 형식 플레이스홀더 치환 로직 구현
-        return pattern;
+
+        StringBuilder result = new StringBuilder();
+        int length = pattern.length();
+        int index = 0;
+
+        while (index < length) {
+            char ch = pattern.charAt(index);
+
+            if (ch == DOLLAR && index + 1 < length && pattern.charAt(index + 1) == OPEN_BRACE) {
+                // 플레이스홀더 시작: "${"
+                int start = index + 2; // 이름 시작 위치
+                int end = pattern.indexOf(CLOSE_BRACE, start);
+
+                if (end == -1) {
+                    // '}'를 찾지 못한 경우: 남은 부분을 그대로 출력하고 종료
+                    result.append(pattern.substring(index));
+                    break;
+                }
+
+                String name = pattern.substring(start, end);
+                String value = variables.get(name);
+
+                if (value == null) {
+                    // 키가 없으면 플레이스홀더를 그대로 둔다.
+                    result.append(pattern, index, end + 1);
+                } else {
+                    result.append(value);
+                }
+
+                index = end + 1;
+            } else {
+                result.append(ch);
+                index++;
+            }
+        }
+
+        return result.toString();
     }
+
 
     /**
      * 편의용 정적 팩토리 메서드.
