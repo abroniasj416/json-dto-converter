@@ -22,4 +22,9 @@ public class CodeFormatter {
         // TODO: 줄 끝 공백 제거, 빈 줄 축소, 개행 정규화 로직 구현
         return source;
     }
+
+    private String normalizeLineEndings(String source) {
+        String withoutWindows = source.replace("\r\n", "\n");
+        return withoutWindows.replace("\r", "\n");
+    }
 }
