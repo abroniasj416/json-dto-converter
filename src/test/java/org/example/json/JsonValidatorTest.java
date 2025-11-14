@@ -45,4 +45,13 @@ class JsonValidatorTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("유효한 JSON이 아닙니다");
     }
+
+    @Test
+    void 존재하지_않는_파일이면_예외가_발생한다() {
+        String nonexistent = "this/file/does/not/exist.json";
+
+        assertThatThrownBy(() -> JsonValidator.validateAndLoad(nonexistent))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("존재하지 않거나 파일이 아닙니다");
+    }
 }
