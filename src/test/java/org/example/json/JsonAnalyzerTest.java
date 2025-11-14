@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,5 +58,31 @@ class JsonAnalyzerTest {
         assertThat(elem).isInstanceOf(SchemaPrimitive.class);
         assertThat(((SchemaPrimitive) elem).pkind())
                 .isEqualTo(SchemaPrimitive.PKind.NUMBER);
+    }
+
+    @Test
+    void 혼합_타입_배열은_유니온으로_표현된다() throws Exception {
+        String json = "{ \"values\": [1, \"two\", 3] }";
+        JsonNode node = mapper.readTree(json);
+
+        JsonAnalyzer analyzer = new JsonAnalyzer();
+        SchemaNode root = analyzer.analyze(node);
+
+        SchemaObject obj = (SchemaObject) root;
+        SchemaArray array = (SchemaArray) obj.fields().get("values").schema();
+
+        // elementTypes 안에 들어 있는 노드들은 모두 Primitive여야 한다
+        Set<SchemaPrimitive.PKind> kinds = new HashSet<>();
+        for (SchemaNode n : array.elementTypes()) {
+            assertThat(n).isInstanceOf(SchemaPrimitive.class);
+            kinds.add(((SchemaPrimitive) n).pkind());
+        }
+
+        // NUMBER와 STRING 두 종류가 존재하는지만 확인
+        assertThat(kinds)
+                .containsExactlyInAnyOrder(
+                        SchemaPrimitive.PKind.NUMBER,
+                        SchemaPrimitive.PKind.STRING
+                );
     }
 }
