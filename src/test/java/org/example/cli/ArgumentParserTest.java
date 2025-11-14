@@ -59,7 +59,7 @@ class ArgumentParserTest {
                 "--root-class", "WeatherApiResponse",
                 "--unknown", "value",
                 "--out", "build/generated",
-                "--package", "com.team606.mrdinner.entity"
+                "--package", "com.org.example.entity"
         };
 
         ArgumentParser parser = new ArgumentParser();
@@ -75,7 +75,7 @@ class ArgumentParserTest {
                 "--input", "samples/weatherapi.json",
                 "--input", "samples/other.json",
                 "--root-class", "WeatherApiResponse",
-                "--package", "com.team606.mrdinner.entity",
+                "--package", "com.org.example.entity",
                 "--out", "build/generated"
         };
 
@@ -84,5 +84,21 @@ class ArgumentParserTest {
         assertThatThrownBy(() -> parser.parse(args))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("옵션이 중복되었습니다");
+    }
+
+    @Test
+    void root_class가_유효한_자바_식별자가_아니면_예외가_발생한다() {
+        String[] args = {
+                "--input", "samples/weatherapi.json",
+                "--root-class", "123Invalid", // 숫자로 시작
+                "--package", "com.org.example.entity",
+                "--out", "build/generated"
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("--root-class 값이 유효한 자바 클래스명이 아닙니다");
     }
 }
