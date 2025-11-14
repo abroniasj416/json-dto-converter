@@ -20,9 +20,9 @@ class ArgumentParserTest {
         Files.writeString(tempJson, "{\"name\":\"Alice\",\"age\":20}", StandardCharsets.UTF_8);
 
         String[] args = {
-                "--input", tempJson.toString(),              // ✅ 실제 존재하는 경로 사용
+                "--input", tempJson.toString(),
                 "--root-class", "WeatherApiResponse",
-                "--package", "com.team606.mrdinner.entity",
+                "--package", "com.org.example.entity",
                 "--out", "build/generated",
                 "--inner-classes", "true"
         };
@@ -32,10 +32,23 @@ class ArgumentParserTest {
 
         assertThat(parsed.getInputPath()).isEqualTo(tempJson.toString());
         assertThat(parsed.getRootClass()).isEqualTo("WeatherApiResponse");
-        assertThat(parsed.getPackageName()).isEqualTo("com.team606.mrdinner.entity");
+        assertThat(parsed.getPackageName()).isEqualTo("com.org.example.entity");
         assertThat(parsed.getOutDir()).isEqualTo("build/generated");
         assertThat(parsed.isInnerClasses()).isTrue();
     }
 
-    
+    @Test
+    void 필수_옵션이_누락되면_예외가_발생한다() {
+        String[] args = {
+                "--root-class", "WeatherApiResponse",
+                "--package", "com.org.example.entity",
+                "--out", "build/generated"
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("--input은 필수입니다");
+    }
 }
