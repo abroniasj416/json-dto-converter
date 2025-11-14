@@ -60,4 +60,17 @@ class TypeInferencerTest {
 
         assertThat(ref.getJavaType()).isEqualTo("Double");
     }
+
+    @Test
+    void 유니온_String과_Object는_String으로_병합된다() {
+        SchemaUnion union = new SchemaUnion();
+        union.addVariant(new SchemaPrimitive(SchemaPrimitive.PKind.STRING));
+        union.addVariant(new SchemaPrimitive(SchemaPrimitive.PKind.NULL)); // NULL → Object 처리
+
+        Map<SchemaNode, TypeInferencer.TypeRef> map = inferencer.inferTypes(union, "MaybeString");
+        TypeInferencer.TypeRef ref = map.get(union);
+
+        assertThat(ref.getJavaType()).isEqualTo("String");
+    }
+
 }
