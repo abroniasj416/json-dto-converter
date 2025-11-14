@@ -1,16 +1,26 @@
 package org.example.cli;
 
 import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ArgumentParserTest {
 
     @Test
-    void 모든_옵션을_정상_파싱한다() {
+    void 모든_옵션을_정상_파싱한다() throws Exception {
+        // 테스트용 임시 JSON 파일 생성
+        Path tempJson = Files.createTempFile("sample-json-", ".json");
+        Files.writeString(tempJson, "{\"name\":\"Alice\",\"age\":20}", StandardCharsets.UTF_8);
+
         String[] args = {
-                "--input", "samples/weatherapi.json",
+                "--input", tempJson.toString(),              // ✅ 실제 존재하는 경로 사용
                 "--root-class", "WeatherApiResponse",
                 "--package", "com.team606.mrdinner.entity",
                 "--out", "build/generated",
@@ -20,10 +30,12 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
         ParsedArguments parsed = parser.parse(args);
 
-        assertThat(parsed.getInputPath()).isEqualTo("samples/weatherapi.json");
+        assertThat(parsed.getInputPath()).isEqualTo(tempJson.toString());
         assertThat(parsed.getRootClass()).isEqualTo("WeatherApiResponse");
         assertThat(parsed.getPackageName()).isEqualTo("com.team606.mrdinner.entity");
         assertThat(parsed.getOutDir()).isEqualTo("build/generated");
         assertThat(parsed.isInnerClasses()).isTrue();
     }
+
+    
 }
