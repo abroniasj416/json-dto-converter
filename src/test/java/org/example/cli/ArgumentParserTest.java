@@ -148,4 +148,17 @@ class ArgumentParserTest {
                 .hasMessageContaining("--inner-classes 옵션은 true 또는 false만 허용됩니다");
     }
 
+    @Test
+    void 옵션과_값의_개수가_맞지_않으면_예외가_발생한다() {
+        String[] args = {
+                "--input", "samples/weatherapi.json",
+                "--root-class" // 값이 없음
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("옵션과 값은 쌍으로 입력해야 합니다");
+    }
 }
