@@ -21,4 +21,17 @@ class TypeInferencerTest {
         assertThat(ref.isObject()).isFalse();
         assertThat(ref.isList()).isFalse();
     }
+
+    @Test
+    void 숫자_배열은_List_Double_로_매핑된다() {
+        SchemaArray array = new SchemaArray();
+        array.elementTypes().add(new SchemaPrimitive(SchemaPrimitive.PKind.NUMBER));
+
+        Map<SchemaNode, TypeInferencer.TypeRef> map = inferencer.inferTypes(array, "Numbers");
+        TypeInferencer.TypeRef ref = map.get(array);
+
+        assertThat(ref.getJavaType()).isEqualTo("List<Double>");
+        assertThat(ref.isList()).isTrue();
+        assertThat(ref.getRequiredImports()).contains("java.util.List");
+    }
 }
