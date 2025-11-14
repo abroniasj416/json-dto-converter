@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JsonValidatorTest {
 
@@ -22,5 +23,16 @@ class JsonValidatorTest {
         assertThat(root.isObject()).isTrue();
         assertThat(root.get("name").asText()).isEqualTo("Alice");
         assertThat(result.sizeBytes()).isGreaterThan(0);
+    }
+
+    @Test
+    void 루트가_객체나_배열이_아니면_예외가_발생한다() throws Exception {
+        Path temp = Files.createTempFile("invalid-root-", ".json");
+        // 루트가 문자열
+        Files.writeString(temp, "\"just string\"", StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> JsonValidator.validateAndLoad(temp.toString()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("루트 타입이 객체 또는 배열이어야 합니다");
     }
 }
