@@ -34,4 +34,18 @@ class TypeInferencerTest {
         assertThat(ref.isList()).isTrue();
         assertThat(ref.getRequiredImports()).contains("java.util.List");
     }
+
+    @Test
+    void 객체는_클래스명으로_매핑된다() {
+        SchemaObject obj = new SchemaObject();
+        obj.fields().put("name",
+                SchemaObject.FieldInfo.presentOnce(new SchemaPrimitive(SchemaPrimitive.PKind.STRING)));
+
+        Map<SchemaNode, TypeInferencer.TypeRef> map = inferencer.inferTypes(obj, "Person");
+        TypeInferencer.TypeRef ref = map.get(obj);
+
+        assertThat(ref.getJavaType()).isEqualTo("Person");
+        assertThat(ref.isObject()).isTrue();
+        assertThat(ref.isList()).isFalse();
+    }
 }
