@@ -128,4 +128,24 @@ class ArgumentParserTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("--package 값에 빈 세그먼트가 포함되어 있습니다");
     }
+
+    @Test
+    void inner_classes_옵션이_true_false가_아니면_예외가_발생한다() throws Exception {
+        Path tempJson = createTempJsonFile();
+
+        String[] args = {
+                "--input", tempJson.toString(),
+                "--root-class", "WeatherApiResponse",
+                "--package", "com.org.example.entity",
+                "--out", "build/generated",
+                "--inner-classes", "yes" // 잘못된 값
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+
+        assertThatThrownBy(() -> parser.parse(args))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("--inner-classes 옵션은 true 또는 false만 허용됩니다");
+    }
+
 }
