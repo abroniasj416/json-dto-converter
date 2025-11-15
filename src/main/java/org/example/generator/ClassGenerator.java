@@ -125,6 +125,35 @@ public class ClassGenerator {
     }
 
     /**
+     * 주어진 ClassSpec을 기반으로 Java 소스 코드를 생성한다.
+     *
+     * @param spec 생성할 클래스 정의
+     * @return 잘 포매팅된 Java 소스 코드 문자열
+     */
+    public String generate(ClassSpec spec) {
+        Objects.requireNonNull(spec, "spec must not be null");
+
+        // 1. 필드 코드 생성
+        String fieldsSource = buildFieldsSource(spec.fields());
+
+        // 2. import 목록 추출
+        String importsSource = buildImportsSource(spec.fields());
+
+        // 3. 템플릿 치환
+        Map<String, String> vars = new HashMap<>();
+        vars.put("package", spec.packageName());
+        vars.put("className", spec.className());
+        vars.put("fields", fieldsSource);
+        vars.put("imports", importsSource);
+
+        String rawSource = classTemplate.render(vars);
+
+        // 4. 코드 포매팅 적용
+        return codeFormatter.format(rawSource);
+    }
+
+
+    /**
      * 필드 리스트를 순회하면서 필드 선언부 문자열을 만든다.
      */
     private String buildFieldsSource(List<FieldSpec> fields) {
