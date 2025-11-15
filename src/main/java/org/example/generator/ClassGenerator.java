@@ -5,6 +5,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * JSON 분석/타입 추론 결과를 기반으로
@@ -164,4 +167,51 @@ public class ClassGenerator {
         return sb.toString();
     }
 
+    /**
+     * 필드 타입을 살펴보면서 필요한 import를 추출한다.
+     * <p>
+     * - java.lang 패키지는 import 하지 않는다.
+     * - List, Map 등 컬렉션 인터페이스는 java.util 패키지를 import 한다.
+     *   (실제 규칙은 필요에 따라 확장/수정 가능)
+     */
+    private String buildImportsSource(List<FieldSpec> fields) {
+        Set<String> imports = new LinkedHashSet<>();
+
+        for (FieldSpec field : fields) {
+            collectImportsFromType(field.type(), imports);
+        }
+
+        if (imports.isEmpty()) {
+            return "";
+        }
+
+        String joined = imports.stream()
+                .sorted()
+                .map(fqcn -> "import " + fqcn + ";\n")
+                .collect(Collectors.joining());
+
+        return joined + "\n";
+    }
+
+    /**
+     * 매우 단순한 규칙으로 타입 문자열에서 import 대상을 추출한다.
+     * <p>
+     * - "List<Something>" → java.util.List
+     * - "Map<K, V>" → java.util.Map
+     *
+     * 이후 LocalDateTime, BigDecimal, 커스텀 타입 등에 대한 규칙은
+     * 필요해지면 확장하면 된다.
+     */
+    private void collectImportsFromType(String type, Set<String> imports) {
+        String trimmed = type.trim();
+
+        if (trimmed.startsWith("List<") || trimmed.equals("List")) {
+            imports.add("java.util.List");
+        }
+        if (trimmed.startsWith("Map<") || trimmed.equals("Map")) {
+            imports.add("java.util.Map");
+        }
+
+        // TODO: 필요 시 LocalDateTime, BigDecimal, Set, custom 타입 등도 여기에서 처리
+    }
 }
