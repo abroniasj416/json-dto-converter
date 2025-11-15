@@ -3,6 +3,8 @@ package org.example.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.exception.InternalException;
+import org.example.exception.UserException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,23 +16,24 @@ public final class JsonValidator {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    private JsonValidator() {}
+    private JsonValidator() {
+    }
 
     // CLI --input 파일 전용: 파일 검사 + UTF-8/BOM 처리 + JSON 파싱 + 루트 타입 확인
     public static Result validateAndLoad(String inputPath) {
         Path path = Paths.get(inputPath).toAbsolutePath().normalize();
 
         if (!Files.exists(path) || !Files.isRegularFile(path)) {
-            throw new IllegalArgumentException("[ERROR] --input 경로가 존재하지 않거나 파일이 아닙니다: " + path);
+            throw new UserException("[ERROR] --input 경로가 존재하지 않거나 파일이 아닙니다: " + path);
         }
         if (!Files.isReadable(path)) {
-            throw new IllegalArgumentException("[ERROR] --input 파일을 읽을 수 없습니다: " + path);
+            throw new UserException("[ERROR] --input 파일을 읽을 수 없습니다: " + path);
         }
 
         try {
             long size = Files.size(path);
             if (size > MAX_FILE_SIZE) {
-                throw new IllegalArgumentException("[ERROR] --input 파일 크기가 너무 큽니다(최대 5MB): " + path);
+                throw new UserException("[ERROR] --input 파일 크기가 너무 큽니다(최대 5MB): " + path);
             }
 
             byte[] bytes = Files.readAllBytes(path);
@@ -39,12 +42,13 @@ public final class JsonValidator {
 
             JsonNode root = assertValidAndParse(json, path.toString());
             if (!root.isObject() && !root.isArray()) {
-                throw new IllegalArgumentException("[ERROR] 루트 타입이 객체 또는 배열이어야 합니다: " + path);
+                throw new UserException("[ERROR] 루트 타입이 객체 또는 배열이어야 합니다: " + path);
             }
 
             return new Result(root, hadBom, size);
         } catch (IOException e) {
-            throw new IllegalArgumentException("[ERROR] --input 파일을 읽는 중 오류가 발생했습니다: " + path, e);
+            // 파일 읽기 중의 I/O 오류는 내부 문제로 보고 감싼다
+            throw new InternalException("입력 파일을 읽는 중 내부 오류가 발생했습니다: " + path, e);
         }
     }
 
@@ -53,7 +57,7 @@ public final class JsonValidator {
         try {
             return MAPPER.readTree(json);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("[ERROR] --input 파일이 유효한 JSON이 아닙니다: " + sourceNameForMsg);
+            throw new UserException("[ERROR] --input 파일이 유효한 JSON이 아닙니다: " + sourceNameForMsg, e);
         }
     }
 
@@ -92,8 +96,17 @@ public final class JsonValidator {
             this.hadBom = hadBom;
             this.sizeBytes = sizeBytes;
         }
-        public JsonNode root() { return root; }
-        public boolean hadBom() { return hadBom; }
-        public long sizeBytes() { return sizeBytes; }
+
+        public JsonNode root() {
+            return root;
+        }
+
+        public boolean hadBom() {
+            return hadBom;
+        }
+
+        public long sizeBytes() {
+            return sizeBytes;
+        }
     }
 }
