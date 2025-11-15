@@ -79,4 +79,43 @@ public class ClassGenerator {
             return fields;
         }
     }
+
+    private final Template classTemplate;
+    private final Template fieldTemplate;
+    private final CodeFormatter codeFormatter;
+
+    /**
+     * 기본 템플릿을 사용하는 생성자.
+     * <p>
+     * - package, imports, class 선언, 필드까지 전부 Template로 치환한다.
+     */
+    public ClassGenerator(CodeFormatter codeFormatter) {
+        this(
+                // 클래스 전체 템플릿
+                new Template(
+                        "package ${package};\n" +
+                                "\n" +
+                                "${imports}" +
+                                "public class ${className} {\n" +
+                                "\n" +
+                                "${fields}\n" +
+                                "}\n"
+                ),
+                // 단일 필드 템플릿
+                new Template(
+                        "${comment}" +
+                                "    private ${type} ${name};\n"
+                ),
+                codeFormatter
+        );
+    }
+
+    /**
+     * 테스트나 확장을 위해 Template를 직접 주입하고 싶을 때 사용하는 생성자.
+     */
+    public ClassGenerator(Template classTemplate, Template fieldTemplate, CodeFormatter codeFormatter) {
+        this.classTemplate = Objects.requireNonNull(classTemplate, "classTemplate must not be null");
+        this.fieldTemplate = Objects.requireNonNull(fieldTemplate, "fieldTemplate must not be null");
+        this.codeFormatter = Objects.requireNonNull(codeFormatter, "codeFormatter must not be null");
+    }
 }
