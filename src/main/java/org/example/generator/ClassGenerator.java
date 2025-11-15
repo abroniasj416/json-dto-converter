@@ -3,6 +3,8 @@ package org.example.generator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * JSON 분석/타입 추론 결과를 기반으로
@@ -118,4 +120,48 @@ public class ClassGenerator {
         this.fieldTemplate = Objects.requireNonNull(fieldTemplate, "fieldTemplate must not be null");
         this.codeFormatter = Objects.requireNonNull(codeFormatter, "codeFormatter must not be null");
     }
+
+    /**
+     * 필드 리스트를 순회하면서 필드 선언부 문자열을 만든다.
+     */
+    private String buildFieldsSource(List<FieldSpec> fields) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < fields.size(); i++) {
+            FieldSpec field = fields.get(i);
+
+            String commentBlock = field.comment()
+                    .map(this::toFieldJavadoc)
+                    .orElse("");
+
+            Map<String, String> vars = new HashMap<>();
+            vars.put("comment", commentBlock);
+            vars.put("type", field.type());
+            vars.put("name", field.name());
+
+            sb.append(fieldTemplate.render(vars));
+
+            if (i < fields.size() - 1) {
+                sb.append("\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 간단한 필드 Javadoc 변환.
+     * 여러 줄 주석도 처리 가능하도록 줄 단위로 분리해서 붙인다.
+     */
+    private String toFieldJavadoc(String comment) {
+        String[] lines = comment.split("\\R");
+        StringBuilder sb = new StringBuilder();
+        sb.append("    /**\n");
+        for (String line : lines) {
+            sb.append("     * ").append(line).append("\n");
+        }
+        sb.append("     */\n");
+        return sb.toString();
+    }
+
 }
