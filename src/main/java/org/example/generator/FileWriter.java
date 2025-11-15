@@ -1,6 +1,6 @@
-package converter.generator;
+package org.example.generator;
 
-import converter.exception.UserException;
+import org.example.exception.UserException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
