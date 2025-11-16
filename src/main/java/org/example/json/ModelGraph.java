@@ -144,22 +144,57 @@ public final class ModelGraph {
                 throw new IllegalStateException("No TypeRef found for schema node: " + fieldSchema);
             }
 
-            // TODO: TypeRef에 맞는 Java 타입 문자열 생성 메서드가 있다면 그걸 사용하세요.
-            // 예: ref.toJavaType() 이 있다면 그걸 쓰는 게 더 적절함.
-            String typeName = ref.toString();
-
+            // TypeRef의 Java 타입 이름 사용
+            String typeName = ref.getJavaType();
             boolean nullable = fieldInfo.optional();
 
             fields.add(new Field(jsonName, fieldName, typeName, nullable));
 
-            // 만약 fieldSchema가 객체 타입이고, 별도의 클래스로 빼야 한다면
-            // 여기서 재귀적으로 buildClassForNode를 호출해줄 수 있음.
-            // (SchemaObject, SchemaArray, SchemaUnion 설계에 따라 추가 확장 가능)
+            // 필드 스키마가 중첩 객체/배열/유니온인 경우, 필요한 ModelClass들을 재귀적으로 생성
+            createNestedClassesIfNeeded(fieldSchema, typeMap, packageName, nameConverter, created);
         }
 
         ModelClass modelClass = new ModelClass(packageName, suggestedSimpleName, fields, root);
         created.put(node, modelClass);
         return modelClass;
+
+    }
+
+    /**
+     * 필드 스키마에 따라 필요한 중첩 ModelClass들을 생성한다.
+     * - SchemaObject: 해당 노드에 대한 ModelClass를 생성
+     * - SchemaArray: elementTypes 안에 객체가 있으면 재귀 처리
+     * - SchemaUnion: variants 안에 객체가 있으면 재귀 처리
+     */
+    private static void createNestedClassesIfNeeded(SchemaNode schema,
+                                                    Map<SchemaNode, TypeRef> typeMap,
+                                                    String packageName,
+                                                    NameConverter nameConverter,
+                                                    Map<SchemaNode, ModelClass> created) {
+
+        if (schema instanceof SchemaObject) {
+            TypeRef ref = typeMap.get(schema);
+            if (ref == null) {
+                throw new IllegalStateException("No TypeRef found for object schema node: " + schema);
+            }
+            String className = ref.getJavaType();
+            // 이미 생성된 경우 created 맵 내부에서 재사용
+            buildClassForNode(schema, typeMap, packageName, className, false, nameConverter, created);
+            return;
+        }
+
+        if (schema instanceof SchemaArray array) {
+            for (SchemaNode elementSchema : array.elementTypes()) {
+                createNestedClassesIfNeeded(elementSchema, typeMap, packageName, nameConverter, created);
+            }
+            return;
+        }
+
+        if (schema instanceof SchemaUnion union) {
+            for (SchemaNode variant : union.variants()) {
+                createNestedClassesIfNeeded(variant, typeMap, packageName, nameConverter, created);
+            }
+        }
     }
 
 

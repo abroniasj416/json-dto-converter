@@ -147,7 +147,7 @@ public class ArgumentParser {
                     }
                 }
             }
-            
+
             // --out: 디렉터리/생성/쓰기 가능 예외
             if (option.equals("--out")) {
                 FileValidator.validateOutDirectory(value);
