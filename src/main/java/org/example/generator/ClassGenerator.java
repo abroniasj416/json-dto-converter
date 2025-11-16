@@ -32,20 +32,34 @@ public class ClassGenerator {
      * type: "String", "int", "List<Student>" 등 Java 타입 표현
      * name: "name", "age" 등의 필드명 (camelCase 가정)
      * comment: 필드 설명이 있을 경우 필드 위에 Javadoc으로 출력 (없으면 생략)
+     * requiredImports: 이 필드 타입을 위해 필요한 import FQCN 집합
      */
     public static final class FieldSpec {
         private final String type;
         private final String name;
         private final String comment;
+        private final java.util.Set<String> requiredImports;
 
         public FieldSpec(String type, String name) {
-            this(type, name, null);
+            this(type, name, null, java.util.Set.of());
         }
 
         public FieldSpec(String type, String name, String comment) {
+            this(type, name, comment, java.util.Set.of());
+        }
+
+        public FieldSpec(String type,
+                         String name,
+                         String comment,
+                         java.util.Set<String> requiredImports) {
             this.type = Objects.requireNonNull(type, "type must not be null");
             this.name = Objects.requireNonNull(name, "name must not be null");
             this.comment = comment;
+            this.requiredImports = java.util.Collections.unmodifiableSet(
+                    new java.util.LinkedHashSet<>(
+                            requiredImports != null ? requiredImports : java.util.Set.of()
+                    )
+            );
         }
 
         public String type() {
@@ -58,6 +72,10 @@ public class ClassGenerator {
 
         public Optional<String> comment() {
             return Optional.ofNullable(comment);
+        }
+
+        public java.util.Set<String> requiredImports() {
+            return requiredImports;
         }
     }
 
@@ -236,11 +254,13 @@ public class ClassGenerator {
 
 
     private ClassSpec toClassSpec(ModelGraph.ModelClass modelClass) {
-        // ModelGraph.Field -> FieldSpec 변환
+        // ModelGraph.Field -> FieldSpec 변환 (requiredImports까지 전달)
         java.util.List<FieldSpec> fieldSpecs = modelClass.getFields().stream()
                 .map(f -> new FieldSpec(
                         f.getTypeName(),
-                        f.getFieldName()
+                        f.getFieldName(),
+                        null,
+                        f.getRequiredImports()
                 ))
                 .toList();
 
@@ -250,6 +270,7 @@ public class ClassGenerator {
                 fieldSpecs
         );
     }
+
 
 
     /**
@@ -306,6 +327,9 @@ public class ClassGenerator {
         Set<String> imports = new LinkedHashSet<>();
 
         for (FieldSpec field : fields) {
+            // 1차: TypeRef에서 전달된 requiredImports 사용
+            imports.addAll(field.requiredImports());
+            // 2차: 기존 문자열 기반 규칙으로 보완 (List, Map 등)
             collectImportsFromType(field.type(), imports);
         }
 

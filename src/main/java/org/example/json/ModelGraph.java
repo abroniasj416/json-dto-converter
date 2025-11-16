@@ -148,9 +148,14 @@ public final class ModelGraph {
             String typeName = ref.getJavaType();
             boolean nullable = fieldInfo.optional();
 
-            fields.add(new Field(jsonName, fieldName, typeName, nullable));
+            fields.add(new Field(
+                    jsonName,
+                    fieldName,
+                    typeName,
+                    nullable,
+                    ref.getRequiredImports()
+            ));
 
-            // 필드 스키마가 중첩 객체/배열/유니온인 경우, 필요한 ModelClass들을 재귀적으로 생성
             createNestedClassesIfNeeded(fieldSchema, typeMap, packageName, nameConverter, created);
         }
 
@@ -331,6 +336,7 @@ public final class ModelGraph {
      *     <li>fieldName: Java 필드 이름 (예: "tempC")</li>
      *     <li>typeName: Java 타입 이름 (예: "double", "String", "List<Student>")</li>
      *     <li>nullable: JSON 상에서 null/누락 가능 여부</li>
+     *     <li>requiredImports: 이 필드를 위해 필요한 import FQCN 집합</li>
      * </ul>
      */
     public static final class Field {
@@ -339,50 +345,53 @@ public final class ModelGraph {
         private final String fieldName;
         private final String typeName;
         private final boolean nullable;
+        private final java.util.Set<String> requiredImports;
 
         /**
-         * @param jsonName  JSON 키 이름
-         * @param fieldName Java 필드 이름
-         * @param typeName  Java 타입 이름 (예: "String", "int", "List<Article>")
-         * @param nullable  값이 null/누락될 수 있는지 여부
+         * @param jsonName        JSON 키 이름
+         * @param fieldName       Java 필드 이름
+         * @param typeName        Java 타입 이름 (예: "String", "int", "List<Article>")
+         * @param nullable        값이 null/누락될 수 있는지 여부
+         * @param requiredImports 이 필드를 위해 필요한 import FQCN 집합
          */
-        public Field(String jsonName, String fieldName, String typeName, boolean nullable) {
+        public Field(String jsonName,
+                     String fieldName,
+                     String typeName,
+                     boolean nullable,
+                     java.util.Set<String> requiredImports) {
+
             this.jsonName = Objects.requireNonNull(jsonName, "jsonName must not be null");
             this.fieldName = Objects.requireNonNull(fieldName, "fieldName must not be null");
             this.typeName = Objects.requireNonNull(typeName, "typeName must not be null");
             this.nullable = nullable;
+            this.requiredImports = java.util.Collections.unmodifiableSet(
+                    new java.util.LinkedHashSet<>(
+                            requiredImports != null ? requiredImports : java.util.Set.of()
+                    )
+            );
         }
 
-        /**
-         * 원본 JSON 키 이름.
-         */
         public String getJsonName() {
             return jsonName;
         }
 
-        /**
-         * Java 필드 이름.
-         */
         public String getFieldName() {
             return fieldName;
         }
 
-        /**
-         * Java 타입 이름 (예: "String", "int", "List<Article>").
-         *
-         * <p>실제 코드 생성 시에는 이 문자열이 그대로
-         * 필드 선언에 사용된다.</p>
-         */
         public String getTypeName() {
             return typeName;
         }
 
-        /**
-         * 이 필드가 null/누락 가능하면 true.
-         * 예: 일부 객체에서만 등장하는 필드, "null"이 자주 나오는 필드 등.
-         */
         public boolean isNullable() {
             return nullable;
+        }
+
+        /**
+         * 이 필드를 위해 필요한 import FQCN 집합.
+         */
+        public java.util.Set<String> getRequiredImports() {
+            return requiredImports;
         }
 
         @Override
@@ -392,8 +401,10 @@ public final class ModelGraph {
                     ", fieldName='" + fieldName + '\'' +
                     ", typeName='" + typeName + '\'' +
                     ", nullable=" + nullable +
+                    ", requiredImports=" + requiredImports +
                     '}';
         }
     }
+
 
 }
