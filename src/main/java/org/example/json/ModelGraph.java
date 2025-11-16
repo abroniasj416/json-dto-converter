@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.example.json.SchemaObject.FieldInfo;
+import org.example.json.TypeInferencer.TypeRef;
 
 /**
  * ModelGraph
@@ -63,6 +65,103 @@ public final class ModelGraph {
 
         return new ModelGraph(rootClass, map);
     }
+
+    /**
+     * JSON 분석/타입 추론 결과를 기반으로 ModelGraph를 구성한다.
+     *
+     * @param schemaRoot    JsonAnalyzer가 만든 루트 SchemaNode
+     * @param typeMap       TypeInferencer가 생성한 타입 매핑
+     * @param packageName   최종 DTO 패키지 이름
+     * @param rootClassName 루트 클래스 이름
+     */
+    public static ModelGraph from(SchemaNode schemaRoot,
+                                  Map<SchemaNode, TypeRef> typeMap,
+                                  String packageName,
+                                  String rootClassName) {
+        return from(schemaRoot, typeMap, packageName, rootClassName, new DefaultNameConverter());
+    }
+
+    /**
+     * NameConverter를 직접 주입할 수 있는 오버로드 버전.
+     */
+    public static ModelGraph from(SchemaNode schemaRoot,
+                                  Map<SchemaNode, TypeRef> typeMap,
+                                  String packageName,
+                                  String rootClassName,
+                                  NameConverter nameConverter) {
+
+        Objects.requireNonNull(schemaRoot, "schemaRoot must not be null");
+        Objects.requireNonNull(typeMap, "typeMap must not be null");
+        Objects.requireNonNull(packageName, "packageName must not be null");
+        Objects.requireNonNull(rootClassName, "rootClassName must not be null");
+        Objects.requireNonNull(nameConverter, "nameConverter must not be null");
+
+        Map<SchemaNode, ModelClass> created = new LinkedHashMap<>();
+        ModelClass rootClass = buildClassForNode(
+                schemaRoot,
+                typeMap,
+                packageName,
+                rootClassName,
+                true,
+                nameConverter,
+                created
+        );
+
+        return ModelGraph.of(rootClass, created.values());
+    }
+
+    /**
+     * 주어진 SchemaNode에 대응하는 ModelClass를 생성한다.
+     * 이미 생성된 노드는 재사용한다.
+     */
+    private static ModelClass buildClassForNode(SchemaNode node,
+                                                Map<SchemaNode, TypeRef> typeMap,
+                                                String packageName,
+                                                String suggestedSimpleName,
+                                                boolean root,
+                                                NameConverter nameConverter,
+                                                Map<SchemaNode, ModelClass> created) {
+
+        if (created.containsKey(node)) {
+            return created.get(node);
+        }
+
+        if (!(node instanceof SchemaObject obj)) {
+            throw new IllegalStateException("Object schema expected for class generation: " + node);
+        }
+
+        List<Field> fields = new ArrayList<>();
+
+        for (Map.Entry<String, FieldInfo> entry : obj.fields().entrySet()) {
+            String jsonName = entry.getKey();
+            FieldInfo fieldInfo = entry.getValue();
+            SchemaNode fieldSchema = fieldInfo.schema();
+
+            String fieldName = nameConverter.toCamelCase(jsonName);
+
+            TypeRef ref = typeMap.get(fieldSchema);
+            if (ref == null) {
+                throw new IllegalStateException("No TypeRef found for schema node: " + fieldSchema);
+            }
+
+            // TODO: TypeRef에 맞는 Java 타입 문자열 생성 메서드가 있다면 그걸 사용하세요.
+            // 예: ref.toJavaType() 이 있다면 그걸 쓰는 게 더 적절함.
+            String typeName = ref.toString();
+
+            boolean nullable = fieldInfo.optional();
+
+            fields.add(new Field(jsonName, fieldName, typeName, nullable));
+
+            // 만약 fieldSchema가 객체 타입이고, 별도의 클래스로 빼야 한다면
+            // 여기서 재귀적으로 buildClassForNode를 호출해줄 수 있음.
+            // (SchemaObject, SchemaArray, SchemaUnion 설계에 따라 추가 확장 가능)
+        }
+
+        ModelClass modelClass = new ModelClass(packageName, suggestedSimpleName, fields, root);
+        created.put(node, modelClass);
+        return modelClass;
+    }
+
 
     /**
      * 그래프의 루트 클래스(엔트리 포인트)를 반환한다.
