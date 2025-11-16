@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+
 
 /**
  * 클래스 소스 코드를 실제 Java 파일(.java)로 저장하는 유틸리티.
@@ -39,4 +41,14 @@ public class FileWriter {
             throw new UserException("[ERROR] Java 파일을 생성하는 중 오류가 발생했습니다: " + filePath, e);
         }
     }
+
+    /**
+     * 클래스 이름 - 소스 코드 맵을 받아 여러 .java 파일을 한 번에 생성한다.
+     */
+    public void writeAll(Path outputDir, Map<String, String> sources) {
+        for (Map.Entry<String, String> entry : sources.entrySet()) {
+            write(outputDir, entry.getKey(), entry.getValue());
+        }
+    }
+
 }
