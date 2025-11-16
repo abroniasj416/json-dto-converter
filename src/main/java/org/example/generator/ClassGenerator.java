@@ -174,26 +174,62 @@ public class ClassGenerator {
 
         Map<String, String> sources = new LinkedHashMap<>();
 
-        if (innerClasses) {
-            // 1. 루트 클래스 하나에 모든 클래스를 inner class로 넣는 전략
-            //    (현재 ClassSpec 설계에 따라 구체 구현 필요)
-            ModelGraph.ModelClass root = graph.getRootClass();
-            ClassSpec rootSpec = toClassSpec(root);
-            // TODO: rootSpec에 inner class들을 추가하는 기능이 있다면 여기서 allClasses 정보를 함께 반영
-
-            String source = generate(rootSpec);
-            sources.put(root.getSimpleName(), source);
-        } else {
-            // 2. 각 ModelClass를 개별 top-level 클래스로 생성
+        if (!innerClasses) {
+            // 1. 각 ModelClass를 개별 top-level 클래스로 생성
             for (ModelGraph.ModelClass modelClass : graph.getDeclaredClasses()) {
                 ClassSpec spec = toClassSpec(modelClass);
                 String source = generate(spec);
                 sources.put(modelClass.getSimpleName(), source);
             }
+            return sources;
         }
 
+        // 2. innerClasses == true 인 경우:
+        //    - 루트 클래스 하나만 파일로 생성
+        //    - 나머지 클래스는 루트 내부의 public static class로 생성
+        ModelGraph.ModelClass root = graph.getRootClass();
+        ClassSpec rootSpec = toClassSpec(root);
+
+        // 루트 이외의 클래스들을 inner class 대상으로 수집
+        java.util.List<ClassSpec> innerSpecs = graph.getDeclaredClasses().stream()
+                .filter(mc -> mc != root)
+                .map(this::toClassSpec)
+                .toList();
+
+        // 루트 필드 코드 생성
+        String rootFieldsSource = buildFieldsSource(rootSpec.fields());
+
+        // inner class 코드 생성
+        String innerClassesSource = buildInnerClassesSource(innerSpecs);
+
+        // import는 루트 + inner 클래스의 모든 필드 타입을 기준으로 계산
+        java.util.List<FieldSpec> allFields = new java.util.ArrayList<>(rootSpec.fields());
+        for (ClassSpec spec : innerSpecs) {
+            allFields.addAll(spec.fields());
+        }
+        String importsSource = buildImportsSource(allFields);
+
+        Map<String, String> vars = new HashMap<>();
+        vars.put("package", rootSpec.packageName());
+        vars.put("className", rootSpec.className());
+
+        String combinedFields;
+        if (innerClassesSource.isBlank()) {
+            combinedFields = rootFieldsSource;
+        } else if (rootFieldsSource.isBlank()) {
+            combinedFields = innerClassesSource;
+        } else {
+            combinedFields = rootFieldsSource + "\n\n" + innerClassesSource;
+        }
+        vars.put("fields", combinedFields);
+        vars.put("imports", importsSource);
+
+        String rawSource = classTemplate.render(vars);
+        String formatted = codeFormatter.format(rawSource);
+        sources.put(rootSpec.className(), formatted);
         return sources;
     }
+
 
     private ClassSpec toClassSpec(ModelGraph.ModelClass modelClass) {
         // ModelGraph.Field -> FieldSpec 변환
@@ -279,6 +315,68 @@ public class ClassGenerator {
                 .collect(Collectors.joining());
 
         return joined + "\n";
+    }
+
+    /**
+     * innerClasses 모드에서 사용할 static inner class 선언부를 생성한다.
+     *
+     * 예:
+     *     public static class Location {
+     *
+     *         private String name;
+     *         private double lat;
+     *     }
+     */
+    private String buildInnerClassesSource(List<ClassSpec> innerClassSpecs) {
+        if (innerClassSpecs == null || innerClassSpecs.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < innerClassSpecs.size(); i++) {
+            ClassSpec spec = innerClassSpecs.get(i);
+
+            sb.append("    public static class ")
+                    .append(spec.className())
+                    .append(" {\n\n");
+
+            String fieldsSource = buildFieldsSource(spec.fields());
+            sb.append(indent(fieldsSource, 1)).append("\n");
+
+            sb.append("    }");
+            if (i < innerClassSpecs.size() - 1) {
+                sb.append("\n\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 주어진 문자열의 각 줄 앞에 indentLevel만큼의 들여쓰기를 추가한다.
+     * indentLevel 1은 공백 4칸을 의미한다.
+     */
+    private String indent(String text, int indentLevel) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        String indent = "    ".repeat(Math.max(0, indentLevel));
+        String[] lines = text.split("\n", -1);
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (!line.isEmpty()) {
+                sb.append(indent).append(line);
+            } else {
+                sb.append(line);
+            }
+            if (i < lines.length - 1) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
     }
 
     /**
