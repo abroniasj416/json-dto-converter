@@ -8,6 +8,12 @@ import org.example.json.JsonAnalyzer;
 import org.example.json.JsonValidator;
 import org.example.json.SchemaNode;
 import org.example.json.TypeInferencer;
+import org.example.json.ModelGraph;
+import org.example.generator.ClassGenerator;
+import org.example.generator.FileWriter;
+import org.example.cli.FileValidator;
+
+import java.nio.file.Path;
 
 import java.util.Map;
 
@@ -39,10 +45,27 @@ public class Main {
             System.out.println("[INFO] 출력 디렉터리: " + parsed.getOutDir());
             System.out.println("[INFO] 추론된 타입 수: " + typeMap.size());
 
-            // TODO:
-            //   - TypeInferencer 결과 + SchemaNode를 사용해 ModelGraph 생성
-            //   - ModelGraph를 기반으로 generator 패키지 (Template / ClassGenerator / FileWriter) 호출
-            //   - 실제 .java 파일 출력
+            ModelGraph modelGraph = ModelGraph.from(
+                    schemaRoot,
+                    typeMap,
+                    parsed.getPackageName(),
+                    parsed.getRootClass()
+            );
+
+            // 6. ClassGenerator를 이용해 Java 소스 생성
+            ClassGenerator generator = new ClassGenerator();
+            Map<SchemaNode, TypeInferencer.TypeRef> unused = typeMap; // 필요 시 제거 가능
+            Map<String, String> sources = generator.generateAllFromModelGraph(
+                    modelGraph,
+                    parsed.isInnerClasses()
+            );
+
+            // 7. FileWriter를 이용해 .java 파일 출력
+            Path outDir = FileValidator.validateOutDirectory(parsed.getOutDir());
+            FileWriter fileWriter = new FileWriter();
+            fileWriter.writeAll(outDir, sources);
+
+            System.out.println("[INFO] DTO 클래스 생성이 완료되었습니다. 생성된 파일 수: " + sources.size());
 
         } catch (UserException e) {
             // 사용자가 옵션/입력 파일 등을 잘못 준 경우
