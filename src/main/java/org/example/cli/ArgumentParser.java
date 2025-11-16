@@ -147,10 +147,7 @@ public class ArgumentParser {
                     }
                 }
             }
-            // --input: 존재/읽기/JSON 파싱 가능
-            if (option.equals("--input")) {
-                JsonValidator.validateAndLoad(value);
-            }
+            
             // --out: 디렉터리/생성/쓰기 가능 예외
             if (option.equals("--out")) {
                 FileValidator.validateOutDirectory(value);
