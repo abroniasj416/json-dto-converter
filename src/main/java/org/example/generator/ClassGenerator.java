@@ -92,6 +92,13 @@ public class ClassGenerator {
     private final CodeFormatter codeFormatter;
 
     /**
+     * CodeFormatter를 기본값으로 사용하는 기본 생성자.
+     */
+    public ClassGenerator() {
+        this(new CodeFormatter());
+    }
+
+    /**
      * 기본 템플릿을 사용하는 생성자.
      * <p>
      * - package, imports, class 선언, 필드까지 전부 Template로 치환한다.
