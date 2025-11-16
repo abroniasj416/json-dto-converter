@@ -22,7 +22,10 @@ public final class JsonAnalyzer {
         return analyze(result.root());
     }
 
-    /** 내부 방문 함수(1차: 프리미티브만 처리) */
+    /**
+     * 내부 방문 함수.
+     * JsonNode의 종류에 따라 객체/배열/프리미티브/NULL 등을 재귀적으로 스키마 트리로 변환한다.
+     */
     private SchemaNode visit(JsonNode n) {
         if (n.isObject()) {
             return visitObject(n);
@@ -37,7 +40,6 @@ public final class JsonAnalyzer {
         if (n.isBoolean())  return new SchemaPrimitive(SchemaPrimitive.PKind.BOOLEAN);
         if (n.isNull())     return new SchemaPrimitive(SchemaPrimitive.PKind.NULL);
 
-        // object/array 등은 다음 커밋에서 처리
         return new SchemaPrimitive(SchemaPrimitive.PKind.STRING);
     }
 

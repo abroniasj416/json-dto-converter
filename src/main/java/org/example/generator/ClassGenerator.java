@@ -13,13 +13,17 @@ import org.example.json.ModelGraph;
 
 /**
  * JSON 분석/타입 추론 결과를 기반으로
- * 단일 Java 클래스 소스 코드를 생성하는 유틸리티.
+ * Java DTO 클래스 소스 코드를 생성하는 유틸리티.
  *
- * <p>이 클래스는 아직 ModelGraph와 직접 연결되지는 않고,
- * {@link ClassSpec}, {@link FieldSpec} 을 통해
- * "생성할 클래스의 형상"을 전달받는 수준까지만 책임을 가진다.
- * 이후 ModelGraph 쪽이 완성되면,
- * 거기서 ClassSpec 목록을 만들어 이 Generator에 넘겨주는 식으로 연결하면 된다.
+ * <p>이 클래스는 두 가지 사용 방식을 지원한다.
+ * <ul>
+ *     <li>{@link ClassSpec}, {@link FieldSpec} 을 직접 만들어 단일 클래스를 생성</li>
+ *     <li>{@link org.example.json.ModelGraph} 를 받아 다수의 클래스를 한 번에 생성
+ *         (각각의 .java 파일 또는 루트 클래스 + static inner class 구조)</li>
+ * </ul>
+ *
+ * <p>실제 파일 쓰기 책임은 {@link FileWriter} 가 가지며,
+ * 이 클래스는 오직 "문자열 형태의 Java 소스 코드" 생성에만 집중한다.</p>
  */
 public class ClassGenerator {
 
