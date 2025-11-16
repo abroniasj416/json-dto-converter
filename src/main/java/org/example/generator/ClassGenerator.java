@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import org.example.json.ModelGraph;
 
 /**
  * JSON 분석/타입 추론 결과를 기반으로
@@ -150,6 +152,56 @@ public class ClassGenerator {
 
         // 4. 코드 포매팅 적용
         return codeFormatter.format(rawSource);
+    }
+
+    /**
+     * ModelGraph를 기반으로 DTO 클래스들의 Java 소스를 생성한다.
+     *
+     * @param graph        생성할 클래스 구조
+     * @param innerClasses true 이면 루트 클래스 안에 static inner class로 몰아넣는 모드를 사용하고,
+     *                     false 이면 각 ModelClass를 개별 .java 파일로 생성한다.
+     * @return key: 클래스 이름(simpleName), value: Java 소스 코드
+     */
+    public Map<String, String> generateAllFromModelGraph(ModelGraph graph, boolean innerClasses) {
+        Objects.requireNonNull(graph, "graph must not be null");
+
+        Map<String, String> sources = new LinkedHashMap<>();
+
+        if (innerClasses) {
+            // 1. 루트 클래스 하나에 모든 클래스를 inner class로 넣는 전략
+            //    (현재 ClassSpec 설계에 따라 구체 구현 필요)
+            ModelGraph.ModelClass root = graph.getRootClass();
+            ClassSpec rootSpec = toClassSpec(root);
+            // TODO: rootSpec에 inner class들을 추가하는 기능이 있다면 여기서 allClasses 정보를 함께 반영
+
+            String source = generate(rootSpec);
+            sources.put(root.getSimpleName(), source);
+        } else {
+            // 2. 각 ModelClass를 개별 top-level 클래스로 생성
+            for (ModelGraph.ModelClass modelClass : graph.getDeclaredClasses()) {
+                ClassSpec spec = toClassSpec(modelClass);
+                String source = generate(spec);
+                sources.put(modelClass.getSimpleName(), source);
+            }
+        }
+
+        return sources;
+    }
+
+    private ClassSpec toClassSpec(ModelGraph.ModelClass modelClass) {
+        // ModelGraph.Field -> FieldSpec 변환
+        java.util.List<FieldSpec> fieldSpecs = modelClass.getFields().stream()
+                .map(f -> new FieldSpec(
+                        f.getTypeName(),
+                        f.getFieldName()
+                ))
+                .toList();
+
+        return new ClassSpec(
+                modelClass.getPackageName(),
+                modelClass.getSimpleName(),
+                fieldSpecs
+        );
     }
 
 
