@@ -79,14 +79,17 @@ public class Template {
                 }
 
                 String name = pattern.substring(start, end);
-                String value = variables.get(name);
 
-                if (value == null) {
-                    // 키가 없으면 플레이스홀더를 그대로 둔다.
+                // 키 존재 여부와 값 null 여부를 구분해서 처리
+                if (!variables.containsKey(name)) {
+                    // 맵에 해당 키가 없는 경우: 플레이스홀더 그대로 남김
                     result.append(pattern, index, end + 1);
                 } else {
-                    result.append(value);
+                    String value = variables.get(name);
+                    // 값이 null이면 빈 문자열로 치환
+                    result.append(value != null ? value : "");
                 }
+
 
                 index = end + 1;
             } else {
