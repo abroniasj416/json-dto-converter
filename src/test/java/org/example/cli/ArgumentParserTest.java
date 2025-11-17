@@ -1,5 +1,6 @@
 package org.example.cli;
 
+import org.example.exception.UserException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -41,6 +42,23 @@ class ArgumentParserTest {
     }
 
     @Test
+    void inner_classes_옵션을_생략하면_false로_처리된다() throws Exception {
+        Path tempJson = createTempJsonFile();
+
+        String[] args = {
+                "--input", tempJson.toString(),
+                "--root-class", "WeatherApiResponse",
+                "--package", "com.org.example.entity",
+                "--out", "build/generated"
+        };
+
+        ArgumentParser parser = new ArgumentParser();
+        ParsedArguments parsed = parser.parse(args);
+
+        assertThat(parsed.isInnerClasses()).isFalse();
+    }
+
+    @Test
     void 필수_옵션이_누락되면_예외가_발생한다() {
         String[] args = {
                 "--root-class", "WeatherApiResponse",
@@ -51,7 +69,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("--input은 필수입니다");
     }
 
@@ -70,7 +88,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("지원하지 않는 옵션");
     }
 
@@ -89,7 +107,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("옵션이 중복되었습니다");
     }
 
@@ -107,7 +125,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("--root-class 값이 유효한 자바 클래스명이 아닙니다");
     }
 
@@ -125,7 +143,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("--package 값에 빈 세그먼트가 포함되어 있습니다");
     }
 
@@ -144,7 +162,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("--inner-classes 옵션은 true 또는 false만 허용됩니다");
     }
 
@@ -158,7 +176,7 @@ class ArgumentParserTest {
         ArgumentParser parser = new ArgumentParser();
 
         assertThatThrownBy(() -> parser.parse(args))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserException.class)
                 .hasMessageContaining("옵션과 값은 쌍으로 입력해야 합니다");
     }
 }
